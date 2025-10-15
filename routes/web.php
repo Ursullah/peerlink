@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\WalletController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoanRequestController;
@@ -18,6 +19,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
     Route::post('/loans/{loan}/repay', [LoanController::class, 'repay'])->name('loans.repay');
+    Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
+    Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
 });
 
 Route::middleware('auth')->group(function () {

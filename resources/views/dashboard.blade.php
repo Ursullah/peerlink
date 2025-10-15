@@ -18,11 +18,14 @@
                     <h2 class="text-2xl font-semibold">Welcome, {{ Auth::user()->name }}!</h2>
                     <p class="mt-2">Your current wallet balance is: <span class="font-bold">KES {{ number_format(Auth::user()->wallet->balance / 100, 2) }}</span></p>
 
-                    <div class="mt-6">
-                        <x-primary-button :href="route('loan-requests.create')">
-                            Request a New Loan
-                        </x-primary-button>
-                    </div>
+                    <div class="mt-6 flex items-center space-x-4">
+                    <x-primary-button :href="route('loan-requests.create')">
+                        Request a New Loan
+                    </x-primary-button>
+                    <a href="{{ route('wallet.deposit.form') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 active:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                        Top-Up Wallet
+                    </a>
+                </div>
                 </div>
             </div>
             
