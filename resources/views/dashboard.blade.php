@@ -47,13 +47,22 @@
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->interest_rate }}%</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->repayment_period }} days</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($request->status == 'pending_approval') bg-yellow-100 text-yellow-800 @endif
-                                                @if($request->status == 'active') bg-blue-100 text-blue-800 @endif
-                                                @if($request->status == 'funded') bg-green-100 text-green-800 @endif
-                                                @if($request->status == 'rejected') bg-red-100 text-red-800 @endif">
-                                                {{ str_replace('_', ' ', $request->status) }}
-                                            </span>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            @if($request->status == 'pending_approval') bg-yellow-100 text-yellow-800 @endif
+                                            @if($request->status == 'active') bg-blue-100 text-blue-800 @endif
+                                            @if($request->status == 'funded') bg-green-100 text-green-800 @endif
+                                            @if($request->status == 'rejected') bg-red-100 text-red-800 @endif">
+                                            {{ str_replace('_', ' ', $request->status) }}
+                                        </span>
+                                        
+                                        @if($request->status == 'funded' && $request->loan)
+                                            <form method="POST" action="{{ route('loans.repay', $request->loan) }}" class="inline ml-2">
+                                                @csrf
+                                                <button type="submit" class="px-2 py-0.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition">
+                                                    Repay
+                                                </button>
+                                            </form>
+                                        @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $request->created_at->format('d M, Y') }}</td>
                                     </tr>

@@ -21,15 +21,27 @@ class Loan extends Model
         'due_date'
     ];
 
-    // A Loan belongs to a User (the borrower)
+    /**
+     * A Loan belongs to a User (the borrower).
+     */
     public function borrower()
     {
         return $this->belongsTo(User::class, 'borrower_id');
     }
 
-    // A Loan belongs to a User (the lender)
+    /**
+     * A Loan belongs to a User (the lender).
+     */
     public function lender()
     {
         return $this->belongsTo(User::class, 'lender_id');
+    }
+
+    /**
+     * A Loan belongs to one LoanRequest.
+     */
+    public function loanRequest()
+    {
+        return $this->belongsTo(LoanRequest::class);
     }
 }

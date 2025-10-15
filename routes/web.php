@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoanRequestController;
@@ -9,19 +9,34 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    $loanRequests = Auth::user()->loanRequests()->latest()->get();
+    // eagerly load the associated loan for funded requests
+    $loanRequests = Auth::user()->loanRequests()->with('loan')->latest()->get();
     return view('dashboard', ['loanRequests' => $loanRequests]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
+    Route::post('/loans/{loan}/repay', [LoanController::class, 'repay'])->name('loans.repay');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ADMIN ROUTES
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/loans', [App\Http\Controllers\Admin\LoanController::class, 'index'])->name('loans.index');
+    Route::patch('/loans/{loanRequest}/approve', [App\Http\Controllers\Admin\LoanController::class, 'approve'])->name('loans.approve');
+    Route::patch('/loans/{loanRequest}/reject', [App\Http\Controllers\Admin\LoanController::class, 'reject'])->name('loans.reject');
+});
+
+// LENDER ROUTES
+Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(function () {
+    Route::get('/loans', [App\Http\Controllers\Lender\LoanController::class, 'index'])->name('loans.index');
+    Route::post('/loans/{loanRequest}/fund', [App\Http\Controllers\Lender\LoanController::class, 'fund'])->name('loans.fund');
 });
 
 require __DIR__.'/auth.php';

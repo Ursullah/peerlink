@@ -19,9 +19,19 @@ class LoanRequest extends Model
         'status'
     ];
 
-    // A LoanRequest belongs to a User (the borrower)
+    /**
+     * A LoanRequest belongs to a User (the borrower).
+     */
     public function borrower()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * A LoanRequest has one Loan created from it.
+     */
+    public function loan()
+    {
+        return $this->hasOne(Loan::class);
     }
 }
