@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/loans/{loan}/repay', [LoanController::class, 'repay'])->name('loans.repay');
     Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
     Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
+    Route::get('/wallet/withdraw', [WalletController::class, 'showWithdrawForm'])->name('wallet.withdraw.form');
+    Route::post('/wallet/withdraw', [WalletController::class, 'processWithdraw'])->name('wallet.withdraw.process');
 });
 
 Route::middleware('auth')->group(function () {
