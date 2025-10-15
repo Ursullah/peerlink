@@ -38,8 +38,7 @@ class TestPayHeroWebhook extends Command
     } else {
         $this->error('Failed to send webhook simulation.');
         $this->error('Response Status: ' . $response->status());
-        // ADD THIS LINE TO SHOW THE FULL ERROR
-        $this->line('Response Body: ' . $response->body());
+        $this->error('Response Body: ' . $response->body());
     }
 
     return 0;

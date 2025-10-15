@@ -12,7 +12,6 @@ class PayHeroWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        dd('Controller was reached!');
         // 1. SECURITY: Verify the webhook signature (simulation)
         // In a real app, you'd compare a signature from the request header
         // with one you generate using your webhook secret to ensure it's from PayHero.

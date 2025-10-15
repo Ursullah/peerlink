@@ -42,4 +42,7 @@ Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(
     Route::post('/loans/{loanRequest}/fund', [App\Http\Controllers\Lender\LoanController::class, 'fund'])->name('loans.fund');
 });
 
+// Webhook routes are typically placed here and excluded from CSRF protection.
+Route::post('/api/webhooks/payhero', [\App\Http\Controllers\PayHeroWebhookController::class, 'handle'])->name('webhooks.payhero');
+
 require __DIR__.'/auth.php';
