@@ -31,4 +31,12 @@ class Transaction extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * A Transaction belongs to a User.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

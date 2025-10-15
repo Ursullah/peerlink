@@ -13,6 +13,10 @@ return [
     |
     */
 
+    'payhero_api_key' => env('PAYHERO_API_KEY'),
+    'payhero_api_secret' => env('PAYHERO_API_SECRET'),
+    'payhero_webhook_secret' => env('PAYHERO_WEBHOOK_SECRET'),
+
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
