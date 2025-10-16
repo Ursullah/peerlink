@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use App\Jobs\InitiatePayHeroPayment;
 
 class WalletController extends Controller
 {
@@ -38,43 +39,27 @@ class WalletController extends Controller
     $apiEndpoint = 'https://backend.payhero.co.ke/api/v2/payments';
 
     // Read channel and provider from config so they can be changed without editing code
-    $channelId = config('app.payhero_channel_id', 911);
+    $channelId = config('app.payhero_channel_id');
     $provider = config('app.payhero_provider', 'm-pesa');
 
+    // 1) Create a local pending transaction with external reference
+    $transaction = $user->transactions()->create([
+        'type' => 'deposit',
+        'amount' => (int) ($amount * 100),
+        'status' => 'pending',
+    ]);
+
+    // 2) Dispatch a job to initiate the PayHero payment asynchronously
     $payload = [
-        'amount' => $amount,
         'phone_number' => $phoneNumber,
         'channel_id' => $channelId,
         'provider' => $provider,
-        'external_reference' => 'PEERLINK_TXN_'.uniqid(),
         'callback_url' => url('/api/webhooks/payhero'),
     ];
-    
-    $response = Http::withBasicAuth($apiUsername, $apiKey)
-                    ->acceptJson()
-                    ->post($apiEndpoint, $payload);
 
-    if ($response->successful()) {
-        $responseData = $response->json();
+    InitiatePayHeroPayment::dispatch($transaction->id, $payload);
 
-        $user->transactions()->create([
-            'type' => 'deposit',
-            'amount' => $amount * 100,
-            'status' => 'pending',
-            'payhero_transaction_id' => $responseData['id'] ?? $payload['external_reference'],
-        ]);
-
-        return redirect()->route('dashboard')->with('success', 'STK Push initiated successfully. Please check your phone and enter your M-Pesa PIN.');
-    } else {
-        // Log both the request we sent and the full response body for debugging
-        Log::error('PayHero API Error: payment initiation failed', [
-            'request_payload' => $payload,
-            'response_status' => $response->status(),
-            'response_body' => $response->body(),
-        ]);
-
-        return back()->with('error', 'Payment could not be initiated. The provider returned an error.');
-    }
+    return redirect()->route('dashboard')->with('success', 'Payment initiation queued. You will be notified on completion.');
 }
 
 
@@ -98,24 +83,33 @@ class WalletController extends Controller
         $amountInKES = (float) $validated['amount'];
         $amountInCents = $amountInKES * 100;
         
-        // --- SIMULATED PAYHERO PAYOUT API CALL ---
-        // In a real application, you would call PayHero's Payouts API here.
-        // We will simulate a successful API call.
-        
-        DB::transaction(function () use ($user, $wallet, $amountInCents) {
+        // Create a withdrawal transaction, debit the wallet, and dispatch payout job
+        DB::transaction(function () use ($user, $wallet, $amountInCents, $amountInKES) {
             // 1. Debit the user's wallet
             $wallet->balance -= $amountInCents;
             $wallet->save();
 
-            // 2. Create a 'withdrawal' transaction record
-            $user->transactions()->create([
+            // 2. Create a 'withdrawal' transaction record (pending)
+            $transaction = $user->transactions()->create([
                 'type' => 'withdrawal',
                 'amount' => -$amountInCents, // Use a negative value for debits
-                'status' => 'successful', // Assume payout is instant for now
-                'payhero_transaction_id' => 'PO_'.uniqid(),
+                'status' => 'pending',
             ]);
+
+            // 3. Dispatch payout job with destination details (e.g., phone or bank account)
+            $payload = [
+                'amount' => $amountInKES,
+                'destination' => [
+                    // Fill in the destination details per PayHero's payouts API spec.
+                    'phone_number' => preg_replace('/^0/', '254', $user->phone_number),
+                ],
+                'external_reference' => 'WD_' . $transaction->id . '_' . now()->timestamp,
+                'metadata' => ['user_id' => $user->id, 'type' => 'withdrawal'],
+            ];
+
+            InitiatePayHeroPayout::dispatch($transaction->id, $payload);
         });
 
-        return redirect()->route('dashboard')->with('success', "Your withdrawal of KES {$amountInKES} has been processed successfully.");
+        return redirect()->route('dashboard')->with('success', "Your withdrawal of KES {$amountInKES} has been queued and will be processed shortly.");
     }
 }

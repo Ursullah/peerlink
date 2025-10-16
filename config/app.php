@@ -17,7 +17,7 @@ return [
     'payhero_api_secret' => env('PAYHERO_API_SECRET'),
     'payhero_webhook_secret' => env('PAYHERO_WEBHOOK_SECRET'),
     // PayHero integration defaults. Override in your .env when needed.
-    'payhero_channel_id' => env('PAYHERO_CHANNEL_ID', 911),
+    'payhero_channel_id' => env('PAYHERO_CHANNEL_ID'),
     'payhero_provider' => env('PAYHERO_PROVIDER', 'm-pesa'),
 
     'name' => env('APP_NAME', 'Laravel'),

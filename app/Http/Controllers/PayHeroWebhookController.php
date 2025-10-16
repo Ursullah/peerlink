@@ -7,25 +7,25 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\PayHeroService;
 
 class PayHeroWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        // 1. SECURITY: Verify the webhook signature (simulation)
-        // In a real app, you'd compare a signature from the request header
-        // with one you generate using your webhook secret to ensure it's from PayHero.
-        $webhookSecret = config('app.payhero_webhook_secret');
-        // if (! $this->isSignatureValid($request, $webhookSecret)) {
-        //     Log::warning('Invalid PayHero webhook signature received.');
-        //     return response()->json(['error' => 'Invalid signature'], 403);
-        // }
-        
         $payload = $request->all();
-        Log::info('PayHero Webhook Received:', $payload); // Good for debugging
+
+        // 1. SECURITY: verify signature using PayHeroService
+        $payhero = app(PayHeroService::class);
+        if (! $payhero->verifyWebhook($request)) {
+            Log::warning('Invalid PayHero webhook signature received.', ['payload' => $payload]);
+            return response()->json(['error' => 'Invalid signature'], 403);
+        }
+
+        Log::info('PayHero Webhook Received (verified):', $payload); // Good for debugging
 
         // 2. Find the corresponding transaction in our database
-        $transaction = Transaction::where('payhero_transaction_id', $payload['transaction_id'])->first();
+    $transaction = Transaction::where('payhero_transaction_id', $payload['transaction_id'])->first();
 
         if (!$transaction) {
             Log::warning('PayHero webhook for unknown transaction received.', $payload);

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Facades\Log;
+use App\Jobs\InitiatePayHeroPayment;
 
 class LoanController extends Controller
 {
@@ -30,40 +31,27 @@ class LoanController extends Controller
     $apiKey = env('PAYHERO_API_KEY');
     $apiEndpoint = 'https://backend.payhero.co.ke/api/v2/payments';
 
-    $channelId = config('app.payhero_channel_id', 911);
+    $channelId = config('app.payhero_channel_id');
     $provider = config('app.payhero_provider', 'm-pesa');
 
+    // Create a pending repayment transaction first
+    $transaction = $loan->transactions()->create([
+        'user_id' => $borrower->id,
+        'type' => 'repayment',
+        'amount' => -$loan->total_repayable, // cents
+        'status' => 'pending',
+    ]);
+
+    // Dispatch job to initiate PayHero payment
     $payload = [
-        'amount' => $amount,
         'phone_number' => $phoneNumber,
         'channel_id' => $channelId,
         'provider' => $provider,
-        'external_reference' => 'REPAY_'.uniqid(),
-        // Good practice to use a dedicated webhook for repayments
-        'callback_url' => url('/api/webhooks/payhero-repayment'), 
+        'callback_url' => url('/api/webhooks/payhero-repayment'),
     ];
 
-    $response = Http::withBasicAuth($apiUsername, $apiKey)->acceptJson()->post($apiEndpoint, $payload);
+    InitiatePayHeroPayment::dispatch($transaction->id, $payload);
 
-    if ($response->successful()) {
-        // Create a pending transaction. The actual loan update will happen in the webhook.
-        $loan->transactions()->create([
-            'user_id' => $borrower->id,
-            'type' => 'repayment',
-            'amount' => -$loan->total_repayable, // Store in cents
-            'status' => 'pending',
-            'payhero_transaction_id' => $response->json()['id'] ?? $payload['external_reference'],
-        ]);
-
-        return back()->with('success', 'Repayment initiated. Please check your phone and enter your M-Pesa PIN.');
-    } else {
-        Log::error('PayHero Repayment Error: initiation failed', [
-            'request_payload' => $payload,
-            'response_status' => $response->status(),
-            'response_body' => $response->body(),
-        ]);
-
-        return back()->with('error', 'Repayment could not be initiated. The provider returned an error.');
-    }
+    return back()->with('success', 'Repayment initiation queued. You will be notified on completion.');
 }
 }
