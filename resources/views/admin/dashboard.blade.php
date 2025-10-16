@@ -8,25 +8,25 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="0">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</h3>
                     <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_users'] }}</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="80">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Loans Funded</h3>
                     <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['total_loans_funded'] }}</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="160">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Money Lent</h3>
                     <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">KES {{ number_format($stats['total_money_lent'] / 100, 2) }}</p>
                 </div>
-                <div class="bg-yellow-100 dark:bg-yellow-800/20 p-6 rounded-lg shadow-sm">
+                <div class="bg-yellow-100 dark:bg-yellow-800/20 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="240">
                     <h3 class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Pending Requests</h3>
                     <p class="mt-2 text-3xl font-bold text-yellow-800 dark:text-yellow-200">{{ $stats['pending_loan_requests'] }}</p>
                     <a href="{{ route('admin.loans.index') }}" class="text-sm text-yellow-600 hover:underline">View Requests &rarr;</a>
                 </div>
             </div>
-            <div class="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+            <div class="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="0">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Loans Funded Per Day</h3>
                 <canvas id="loansChart"></canvas>
             </div>

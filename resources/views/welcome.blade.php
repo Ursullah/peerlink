@@ -62,11 +62,11 @@
                 </svg>
             </div>
             <div class="relative z-10 max-w-2xl mx-auto py-32 sm:py-48 lg:py-56 text-center">
-                <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">Empowering Peer-to-Peer Lending</h1>
-                <p class="mt-4 text-lg sm:text-xl text-gray-600 dark:text-gray-300">Borrow instantly, lend securely, and build your financial future with trust and transparency. PeerLink connects people for a better tomorrow.</p>
+                <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6 animate-on-scroll">Empowering Peer-to-Peer Lending</h1>
+                <p class="mt-4 text-lg sm:text-xl text-gray-600 dark:text-gray-300 animate-on-scroll" data-delay="80">Borrow instantly, lend securely, and build your financial future with trust and transparency. PeerLink connects people for a better tomorrow.</p>
                 <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="{{ route('register') }}" class="rounded-lg bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition">Get Started</a>
-                    <a href="#how-it-works" class="text-lg font-semibold leading-6 text-indigo-600 dark:text-indigo-400 hover:underline">Learn more <span aria-hidden="true">→</span></a>
+                    <a href="{{ route('register') }}" class="rounded-lg bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition animate-on-scroll" data-delay="160">Get Started</a>
+                    <a href="#how-it-works" class="text-lg font-semibold leading-6 text-indigo-600 dark:text-indigo-400 hover:underline animate-on-scroll" data-delay="240">Learn more <span aria-hidden="true">→</span></a>
                 </div>
             </div>
         </main>
@@ -75,12 +75,12 @@
         <section id="how-it-works" class="relative z-10 py-24 sm:py-32 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-800">
             <div class="mx-auto max-w-7xl px-6 lg:px-8">
                 <div class="mx-auto max-w-2xl lg:text-center">
-                    <h2 class="text-base font-semibold leading-7 text-indigo-600 dark:text-indigo-400">How It Works</h2>
-                    <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Everything you need to lend and borrow with confidence</p>
+                    <h2 class="text-base font-semibold leading-7 text-indigo-600 dark:text-indigo-400 animate-on-scroll">How It Works</h2>
+                    <p class="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl animate-on-scroll" data-delay="80">Everything you need to lend and borrow with confidence</p>
                 </div>
                 <div class="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
                     <dl class="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-                        <div class="relative pl-16">
+                        <div class="relative pl-16 animate-on-scroll" data-delay="0">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <!-- Wallet with plus icon -->
@@ -94,7 +94,7 @@
                             </dt>
                             <dd class="mt-2 text-base leading-7 text-gray-600 dark:text-gray-400">Borrowers top-up a wallet to use as digital collateral and create a loan request. This builds immediate trust.</dd>
                         </div>
-                        <div class="relative pl-16">
+                        <div class="relative pl-16 animate-on-scroll" data-delay="80">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <!-- Paper plane icon for instant funding -->
@@ -106,7 +106,7 @@
                             </dt>
                             <dd class="mt-2 text-base leading-7 text-gray-600 dark:text-gray-400">Lenders browse active, approved loan requests. When a loan is funded, the money is instantly transferred to the borrower's wallet.</dd>
                         </div>
-                        <div class="relative pl-16">
+                        <div class="relative pl-16 animate-on-scroll" data-delay="160">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <!-- Handshake icon for repay & build reputation -->
@@ -118,7 +118,7 @@
                             </dt>
                             <dd class="mt-2 text-base leading-7 text-gray-600 dark:text-gray-400">Borrowers repay via STK Push. Successful, on-time repayments increase their reputation score, unlocking better terms in the future.</dd>
                         </div>
-                        <div class="relative pl-16">
+                        <div class="relative pl-16 animate-on-scroll" data-delay="240">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <!-- Shield with checkmark for automated & secure -->

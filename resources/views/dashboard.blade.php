@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (session('success'))
                 <div 
                     x-data="{ show: true }" 
@@ -37,15 +37,15 @@
             @endif
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="0">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Reputation Score</h3>
                     <p class="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ $stats['reputation_score'] }}</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="80">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Loans</h3>
                     <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $stats['active_loan_count'] }}</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm animate-on-scroll" data-delay="160">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Borrowed</h3>
                     <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">KES {{ number_format($stats['total_borrowed'] / 100, 2) }}</p>
                 </div>
