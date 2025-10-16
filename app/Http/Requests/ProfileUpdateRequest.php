@@ -9,22 +9,25 @@ use Illuminate\Validation\Rule;
 class ProfileUpdateRequest extends FormRequest
 {
     /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        // Allow all authenticated users to update their profile. Adjust if you have extra checks.
+        return true;
+    }
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
-            ],
-        ];
-    }
+{
+    return [
+        'name' => ['string', 'max:255'],
+        'email' => ['string', 'email', 'max:255', 'unique:users,email,' . $this->user()->id],
+        'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10240'], // 10MB limit
+    ];
+}
+
 }

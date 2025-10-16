@@ -30,11 +30,14 @@ class LoanController extends Controller
     $apiKey = env('PAYHERO_API_KEY');
     $apiEndpoint = 'https://backend.payhero.co.ke/api/v2/payments';
 
+    $channelId = config('app.payhero_channel_id', 911);
+    $provider = config('app.payhero_provider', 'm-pesa');
+
     $payload = [
         'amount' => $amount,
         'phone_number' => $phoneNumber,
-        'channel_id' => 911,
-        'provider' => 'm-pesa',
+        'channel_id' => $channelId,
+        'provider' => $provider,
         'external_reference' => 'REPAY_'.uniqid(),
         // Good practice to use a dedicated webhook for repayments
         'callback_url' => url('/api/webhooks/payhero-repayment'), 
@@ -54,7 +57,12 @@ class LoanController extends Controller
 
         return back()->with('success', 'Repayment initiated. Please check your phone and enter your M-Pesa PIN.');
     } else {
-        Log::error('PayHero Repayment Error:', ['response' => $response->body()]);
+        Log::error('PayHero Repayment Error: initiation failed', [
+            'request_payload' => $payload,
+            'response_status' => $response->status(),
+            'response_body' => $response->body(),
+        ]);
+
         return back()->with('error', 'Repayment could not be initiated. The provider returned an error.');
     }
 }

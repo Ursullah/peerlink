@@ -37,11 +37,15 @@ class WalletController extends Controller
     $apiKey = env('PAYHERO_API_KEY');
     $apiEndpoint = 'https://backend.payhero.co.ke/api/v2/payments';
 
+    // Read channel and provider from config so they can be changed without editing code
+    $channelId = config('app.payhero_channel_id', 911);
+    $provider = config('app.payhero_provider', 'm-pesa');
+
     $payload = [
         'amount' => $amount,
         'phone_number' => $phoneNumber,
-        'channel_id' => 911,
-        'provider' => 'm-pesa',
+        'channel_id' => $channelId,
+        'provider' => $provider,
         'external_reference' => 'PEERLINK_TXN_'.uniqid(),
         'callback_url' => url('/api/webhooks/payhero'),
     ];
@@ -62,7 +66,13 @@ class WalletController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'STK Push initiated successfully. Please check your phone and enter your M-Pesa PIN.');
     } else {
-        Log::error('PayHero API Error:', ['response' => $response->body()]);
+        // Log both the request we sent and the full response body for debugging
+        Log::error('PayHero API Error: payment initiation failed', [
+            'request_payload' => $payload,
+            'response_status' => $response->status(),
+            'response_body' => $response->body(),
+        ]);
+
         return back()->with('error', 'Payment could not be initiated. The provider returned an error.');
     }
 }
