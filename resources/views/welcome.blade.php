@@ -25,10 +25,8 @@
         <header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-800">
             <nav class="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 lg:px-8" aria-label="Global">
                 <div class="flex items-center gap-4">
-                    <a href="/" class="flex items-center gap-2 text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                        <svg class="h-8 w-8" fill="none" viewBox="0 0 32 32" stroke="currentColor"><circle cx="16" cy="16" r="15" stroke-width="2" class="text-indigo-300 dark:text-indigo-500" /><path d="M10 18l6-6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                        PeerLink
-                    </a>
+                    <img src="{{ asset('images/peerlink_logo.png') }}" alt="PeerLink Logo" class="h-28 w-auto dark:invert">
+
                 </div>
                 <div class="flex items-center gap-6">
                     <a href="#how-it-works" class="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition">How it works</a>
@@ -151,8 +149,7 @@
         <footer class="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 mt-16">
             <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col items-center justify-center">
                 <div class="flex items-center gap-2 text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 32 32" stroke="currentColor"><circle cx="16" cy="16" r="15" stroke-width="2" class="text-indigo-300 dark:text-indigo-500" /><path d="M10 18l6-6 6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                    PeerLink
+                    <img src="{{ asset('images/peerlink_logo.png') }}" alt="PeerLink Logo" class="h-28 w-auto dark:invert">
                 </div>
                 <div class="text-gray-400 text-sm mt-2">&copy; {{ date('Y') }} PeerLink. All rights reserved.</div>
             </div>
