@@ -82,4 +82,9 @@ class LoanController extends Controller
 
         return back()->with('success', 'Loan funded successfully! The amount has been transferred to the borrower.');
     }
+    public function investments()
+    {
+        $myLoans = Loan::where('lender_id', Auth::id())->with('borrower')->latest()->get();
+        return view('lender.investments', compact('myLoans'));
+    }
 }

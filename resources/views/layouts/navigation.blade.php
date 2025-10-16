@@ -12,9 +12,22 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @if(Auth::user()->role == 'admin')
+                        <x-nav-link :href="route('admin.loans.index')" :active="request()->routeIs('admin.loans.index')">
+                            {{ __('Admin Dashboard') }}
+                        </x-nav-link>
+                    @elseif(Auth::user()->role == 'lender')
+                        <x-nav-link :href="route('lender.loans.index')" :active="request()->routeIs('lender.loans.index')">
+                            {{ __('Browse Loans') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
+                            {{ __('My Investments') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('My Dashboard') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 

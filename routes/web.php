@@ -42,6 +42,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(function () {
     Route::get('/loans', [App\Http\Controllers\Lender\LoanController::class, 'index'])->name('loans.index');
     Route::post('/loans/{loanRequest}/fund', [App\Http\Controllers\Lender\LoanController::class, 'fund'])->name('loans.fund');
+    Route::get('/my-investments', [App\Http\Controllers\Lender\LoanController::class, 'investments'])->name('loans.investments');
 });
 
 // Webhook routes are typically placed here and excluded from CSRF protection.
