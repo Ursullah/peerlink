@@ -71,7 +71,12 @@
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.537m0 0l3.992-2.25M6.343 7.343l3.992 2.25m0 0l3.992 2.25M12 6v12m6.343-15.657l-3.992 2.25m0 0l-3.992 2.25m3.992-2.25l3.992 2.25" /></svg>
+                                    <!-- Wallet with plus icon -->
+                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75V5.25A2.25 2.25 0 0015 3h-6A2.25 2.25 0 006.75 5.25v1.5" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5A2.25 2.25 0 0122.5 9.75v8.25A2.25 2.25 0 0120.25 20.25H3.75A2.25 2.25 0 011.5 18V9.75A2.25 2.25 0 013.75 7.5z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 11.25v3m1.5-1.5h-3" />
+                                    </svg>
                                 </div>
                                 Digital Collateral &amp; Requests
                             </dt>
@@ -80,7 +85,10 @@
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.75A.75.75 0 013 4.5h.75m0 0h.75a.75.75 0 010 1.5H3.75m0 0v.75a.75.75 0 01-.75.75h-.75a.75.75 0 01-.75-.75V3.75c0-.414.336-.75.75-.75h2.25c.414 0 .75.336.75.75v.75" /></svg>
+                                    <!-- Paper plane icon for instant funding -->
+                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12l16.5-7.5-7.5 16.5-2.25-6.75-6.75-2.25z" />
+                                    </svg>
                                 </div>
                                 Instant Funding
                             </dt>
@@ -89,7 +97,10 @@
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.985m0 0a8.25 8.25 0 0111.667 0l3.181 3.183m-11.667-3.182a8.25 8.25 0 00-11.667 0L2.985 16.644" /></svg>
+                                    <!-- Handshake icon for repay & build reputation -->
+                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.75l-3.75-3.75m0 0l-3.75 3.75m3.75-3.75V21m0-6.75l3.75-3.75m0 0l3.75 3.75m-3.75-3.75V3" />
+                                    </svg>
                                 </div>
                                 Repay &amp; Build Reputation
                             </dt>
@@ -98,7 +109,11 @@
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div class="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <!-- Shield with checkmark for automated & secure -->
+                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7.5 4.5v6c0 5.25-7.5 9-7.5 9s-7.5-3.75-7.5-9v-6L12 3z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 12.75l1.5 1.5 3-3" />
+                                    </svg>
                                 </div>
                                 Automated &amp; Secure
                             </dt>
