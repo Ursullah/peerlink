@@ -9,22 +9,23 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    // eagerly load the associated loan for funded requests
-    $loanRequests = Auth::user()->loanRequests()->with('loan')->latest()->get();
-    return view('dashboard', ['loanRequests' => $loanRequests]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+// BORROWER ROUTES
+Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
+    Route::get('/dashboard', function () {
+        $loanRequests = Auth::user()->loanRequests()->with('loan')->latest()->get();
+        return view('dashboard', ['loanRequests' => $loanRequests]);
+    })->name('dashboard');
 
-Route::middleware('auth')->group(function () {
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
     Route::post('/loans/{loan}/repay', [LoanController::class, 'repay'])->name('loans.repay');
+    
     Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
     Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
+    
     Route::get('/wallet/withdraw', [WalletController::class, 'showWithdrawForm'])->name('wallet.withdraw.form');
     Route::post('/wallet/withdraw', [WalletController::class, 'processWithdraw'])->name('wallet.withdraw.process');
 });
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -33,6 +34,8 @@ Route::middleware('auth')->group(function () {
 
 // ADMIN ROUTES
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
     Route::get('/loans', [App\Http\Controllers\Admin\LoanController::class, 'index'])->name('loans.index');
     Route::patch('/loans/{loanRequest}/approve', [App\Http\Controllers\Admin\LoanController::class, 'approve'])->name('loans.approve');
     Route::patch('/loans/{loanRequest}/reject', [App\Http\Controllers\Admin\LoanController::class, 'reject'])->name('loans.reject');

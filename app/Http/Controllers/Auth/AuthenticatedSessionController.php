@@ -24,11 +24,20 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
 {
-    // This method is in LoginRequest
-    $request->authenticate(); 
+    $request->authenticate();
 
     $request->session()->regenerate();
 
+    // Add this logic for role-based redirect
+    $user = $request->user();
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+    if ($user->role === 'lender') {
+        return redirect()->route('lender.loans.index');
+    }
+
+    // Default redirect for borrowers
     return redirect()->intended(route('dashboard', absolute: false));
 }
 

@@ -16,7 +16,13 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h2 class="text-2xl font-semibold">Welcome, {{ Auth::user()->name }}!</h2>
-                    <p class="mt-2">Your current wallet balance is: <span class="font-bold">KES {{ number_format(Auth::user()->wallet->balance / 100, 2) }}</span></p>
+                    <p class="mt-2">
+                            @if(Auth::user()->wallet)
+                                Your current wallet balance is: <span class="font-bold">KES {{ number_format(Auth::user()->wallet->balance / 100, 2) }}</span>
+                            @else
+                                <span class="text-red-500">Wallet not found. Please contact support.</span>
+                            @endif
+                    </p>
 
                     <div class="mt-6 flex items-center space-x-4">
                         <x-primary-button :href="route('loan-requests.create')">

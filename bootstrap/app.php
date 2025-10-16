@@ -13,9 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         // This is the correct block for middleware configuration
+
+        $middleware->appendToGroup('web', [
+        \App\Http\Middleware\PreventBackHistory::class,
+    ]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdminMiddleware::class,
             'lender' => \App\Http\Middleware\IsLenderMiddleware::class,
+            'borrower' => \App\Http\Middleware\IsBorrowerMiddleware::class,
         ]);
 
         // This code needs to be moved here
