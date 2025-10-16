@@ -25,7 +25,14 @@ class PayHeroWebhookController extends Controller
         Log::info('PayHero Webhook Received (verified):', $payload); // Good for debugging
 
         // 2. Find the corresponding transaction in our database
-    $transaction = Transaction::where('payhero_transaction_id', $payload['transaction_id'])->first();
+        // PayHero may send different identifier keys depending on the integration/version.
+        $possibleIds = [];
+        if (isset($payload['transaction_id'])) $possibleIds[] = $payload['transaction_id'];
+        if (isset($payload['reference'])) $possibleIds[] = $payload['reference'];
+        if (isset($payload['CheckoutRequestID'])) $possibleIds[] = $payload['CheckoutRequestID'];
+        if (isset($payload['external_reference'])) $possibleIds[] = $payload['external_reference'];
+
+        $transaction = Transaction::whereIn('payhero_transaction_id', $possibleIds)->first();
 
         if (!$transaction) {
             Log::warning('PayHero webhook for unknown transaction received.', $payload);

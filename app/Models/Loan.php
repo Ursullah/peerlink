@@ -44,4 +44,12 @@ class Loan extends Model
     {
         return $this->belongsTo(LoanRequest::class);
     }
+
+    /**
+     * A Loan can have many transactions (polymorphic relation).
+     */
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'transactionable');
+    }
 }

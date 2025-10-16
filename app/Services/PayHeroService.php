@@ -87,6 +87,40 @@ class PayHeroService
     }
 
     /**
+     * Poll a PayHero payment by reference or checkout id.
+     * Returns the Http client response object.
+     */
+    public function fetchPaymentStatus(string $identifier)
+    {
+        // PayHero may support GET /payments/{id} or a query endpoint. Try common patterns.
+        $candidates = [
+            $this->endpoint . '/payments/' . urlencode($identifier),
+            $this->endpoint . '/payments?external_reference=' . urlencode($identifier),
+        ];
+
+        foreach ($candidates as $url) {
+            try {
+                $this->logger->info('PayHeroService:fetchPaymentStatus - querying', ['url' => $url]);
+                $response = Http::withBasicAuth($this->username, $this->apiKey)
+                            ->acceptJson()
+                            ->get($url);
+
+                $this->logger->info('PayHeroService:fetchPaymentStatus - response', ['status' => $response->status(), 'body' => $response->body()]);
+
+                if ($response->successful()) {
+                    return $response;
+                }
+            } catch (\Throwable $ex) {
+                $this->logger->warning('PayHeroService:fetchPaymentStatus - attempt failed', ['url' => $url, 'message' => $ex->getMessage()]);
+                // try next candidate
+            }
+        }
+
+        // If we reach here, return the last response or null
+        return null;
+    }
+
+    /**
      * Verify webhook signature using the configured webhook secret.
      * Returns boolean true if valid.
      */

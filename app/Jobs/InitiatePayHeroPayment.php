@@ -41,20 +41,35 @@ class InitiatePayHeroPayment implements ShouldQueue
 
         // Merge defaults
         $data = array_merge($this->payload, [
-            'amount' => $transaction->amount / 100, // convert cents to KES
+            // Ensure amount sent to PayHero is positive (KES). Transactions store cents and can be negative for debits.
+            'amount' => abs($transaction->amount) / 100,
             'external_reference' => $transaction->id . '_' . now()->timestamp,
         ]);
 
         $response = $payHero->initiatePayment($data);
 
-        if ($response->successful()) {
+        if ($response && $response->successful()) {
             $body = $response->json();
-            $transaction->payhero_transaction_id = $body['id'] ?? $data['external_reference'];
+            // PayHero returns different identifier keys depending on the endpoint/version.
+            // Prefer 'reference' or 'CheckoutRequestID', then external_reference or id.
+            $payheroId = $body['reference'] ?? $body['CheckoutRequestID'] ?? $body['checkout_request_id'] ?? $body['external_reference'] ?? $body['id'] ?? $data['external_reference'] ?? null;
+
+            // Save whatever identifier we have so webhooks can match back to this transaction.
+            $transaction->payhero_transaction_id = $payheroId;
             $transaction->status = 'pending';
             $transaction->save();
         } else {
-            Log::error('InitiatePayHeroPayment: initiation failed', ['transaction' => $transaction->id, 'status' => $response->status(), 'body' => $response->body()]);
-            // Optionally mark transaction as failed or retry depending on your logic
+            // If we received a response, decide based on status code. Server errors (5xx) are transient — throw to allow retry.
+            if ($response && $response->serverError()) {
+                Log::warning('InitiatePayHeroPayment: transient server error, will retry', ['transaction' => $transaction->id, 'status' => $response->status(), 'body' => $response->body()]);
+                // Throw to allow the queue worker to retry according to its retry policy
+                throw new \Exception('Transient PayHero error: ' . $response->body());
+            }
+
+            // Client errors (4xx) are likely permanent — mark transaction failed and log details.
+            $status = $response ? $response->status() : null;
+            $body = $response ? $response->body() : 'no response';
+            Log::error('InitiatePayHeroPayment: initiation failed (permanent)', ['transaction' => $transaction->id, 'status' => $status, 'body' => $body]);
             $transaction->status = 'failed';
             $transaction->save();
         }
