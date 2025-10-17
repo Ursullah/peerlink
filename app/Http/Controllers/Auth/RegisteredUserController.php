@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -28,37 +30,51 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-{
-    $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        // Updated unique rule for phone_number:
-        'phone_number' => ['required', 'string', 'max:255', 'unique:users,phone_number,NULL,id,deleted_at,NULL'], 
-        // Updated unique rule for email:
-        'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'], 
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    ]);
-
-    $user = User::create([
-        'name' => $request->name,
-        'phone_number' => $request->phone_number,
-        'email' => $request->email, // Add this to save the email
-        'password' => Hash::make($request->password),
-    ]);
+    {
     
-    // Create a wallet for the new user
-    $user->wallet()->create(['balance' => 0]);
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            // Use Rule::unique() for phone_number
+            'phone_number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'phone_number')->whereNull('deleted_at'),
+            ],
+            // Use Rule::unique() for email
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
 
-    event(new Registered($user));
+        $user = User::create([
+            'name' => $request->name,
+            'phone_number' => $request->phone_number,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
 
-    Auth::login($user);
+        $user->wallet()->create(['balance' => 0]);
+        
+        
 
-    // Redirect based on role
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
+        event(new Registered($user));
+
+        Auth::login($user);
+        
+
+        // Redirect based on role
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user->role === 'lender') {
+            return redirect()->route('lender.loans.index');
+        }
+        return redirect(route('dashboard', absolute: false));
     }
-    if ($user->role === 'lender') {
-        return redirect()->route('lender.loans.index');
-    }
-    return redirect(route('dashboard', absolute: false));
-}
 }
