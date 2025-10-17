@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use App\Jobs\InitiatePayHeroPayment;
 use App\Jobs\InitiatePayHeroPayout;
-use App\Services\PayHeroService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WalletController extends Controller
@@ -23,6 +20,7 @@ class WalletController extends Controller
         if (Auth::user()->role === 'admin') {
             abort(403, 'Admins cannot access wallet features.');
         }
+
         return view('wallet.deposit');
     }
 
@@ -42,8 +40,8 @@ class WalletController extends Controller
         $phoneNumber = preg_replace('/^0/', '254', $user->phone_number);
         $channelId = config('payhero.channel_id');
         $provider = config('payhero.provider', 'm-pesa');
-        
-        $externalRef = 'DEPOSIT_' . $user->id . '_' . Str::random(8);
+
+        $externalRef = 'DEPOSIT_'.$user->id.'_'.Str::random(8);
 
         $transaction = $user->transactions()->create([
             'type' => 'deposit',
@@ -63,7 +61,17 @@ class WalletController extends Controller
 
         InitiatePayHeroPayment::dispatch($transaction, $payload);
 
-        return redirect()->route('dashboard')->with('success', 'STK Push initiated. Please enter your PIN.');
+        // --- SMART REDIRECT ---
+        $successMessage = 'STK Push initiated. Please enter your PIN.';
+
+        if ($user->role === 'lender') {
+            // Redirect lender back to their main view (e.g., browse loans)
+            return redirect()->route('lender.loans.index')->with('success', $successMessage);
+        } else {
+            // Redirect borrower back to their dashboard
+            return redirect()->route('dashboard')->with('success', $successMessage);
+        }
+        // --- END SMART REDIRECT ---
     }
 
     /**
@@ -75,6 +83,7 @@ class WalletController extends Controller
         if (Auth::user()->role === 'admin') {
             abort(403, 'Admins cannot access wallet features.');
         }
+
         return view('wallet.withdraw');
     }
 
@@ -92,13 +101,13 @@ class WalletController extends Controller
         $wallet = $user->wallet;
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:50|max:' . ($wallet->balance / 100),
+            'amount' => 'required|numeric|min:50|max:'.($wallet->balance / 100),
         ]);
 
         $amountInKES = (float) $validated['amount'];
         $amountInCents = $amountInKES * 100;
-        $externalRef = 'WITHDRAW_' . $user->id . '_' . Str::random(8);
-        
+        $externalRef = 'WITHDRAW_'.$user->id.'_'.Str::random(8);
+
         $transaction = null;
 
         DB::transaction(function () use ($user, $wallet, $amountInCents, $externalRef, &$transaction) {
@@ -112,7 +121,7 @@ class WalletController extends Controller
             ]);
         });
 
-        if (!$transaction) {
+        if (! $transaction) {
             return back()->with('error', 'Withdrawal could not be initiated due to a database error.');
         }
 
