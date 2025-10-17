@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Jobs\InitiatePayHeroPayment;
-use App\Jobs\InitiatePayHeroPayout; // Import this
-use Illuminate\Support\Str; // Import this
+use App\Jobs\InitiatePayHeroPayout; 
+use Illuminate\Support\Str; 
 
 class WalletController extends Controller
 {

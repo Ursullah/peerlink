@@ -60,11 +60,23 @@ class PayHeroWebhookController extends Controller
                 Log::error('Webhook processing failed:', ['error' => $e->getMessage()]);
                 return response()->json(['error' => 'Internal server error'], 500);
             }
-        } else {
-            // If payment failed (e.g., 'FAILED', 'CANCELLED')
-            $transaction->update(['status' => 'failed']);
-            Log::warning('Webhook received non-successful status.', $payload);
-        }
+        } 
+         else {
+        // If payment failed ( 'FAILED', 'CANCELLED', 'INSUFFICIENT_FUNDS')
+        $failureReason = $payload['error_message'] ?? // Specific error from PayHero
+                         $payload['message'] ??       // Generic message from PayHero
+                         'Payment was not successful.'; // Default fallback
+
+        $transaction->update([
+            'status' => 'failed',
+            'failure_reason' => $failureReason
+        ]);
+
+        // Store a user-friendly message in the session for the next request
+        session()->flash('transaction_failed', "Your {$transaction->type} failed: " . $failureReason);
+
+        Log::warning('Webhook received non-successful status.', $payload);
+    }
 
         // 3. Respond to PayHero
         return response()->json(['message' => 'Webhook processed successfully']);
