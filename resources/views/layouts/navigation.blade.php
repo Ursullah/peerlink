@@ -11,7 +11,7 @@
                     @php
                         $homeRoute = match (Auth::user()->role) {
                             'admin' => route('admin.dashboard'),
-                            'lender' => route('lender.loans.index'),
+                            'lender' => route('lender.dashboard'),
                             default => route('dashboard'),
                         };
                     @endphp
