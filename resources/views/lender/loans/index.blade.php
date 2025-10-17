@@ -42,6 +42,7 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead>
                             <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase dark:text-gray-400">Borrower</th> 
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase">Amount</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase">Interest Rate</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase">Period</th>
@@ -52,6 +53,7 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse ($loanRequests as $request)
                                 <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">{{ $request->borrower->name }}</td>
                                     <td class="px-6 py-4">KES {{ number_format($request->amount / 100, 2) }}</td>
                                     <td class="px-6 py-4">{{ $request->interest_rate }}%</td>
                                     <td class="px-6 py-4">{{ $request->repayment_period }} days</td>

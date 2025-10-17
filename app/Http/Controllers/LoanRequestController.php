@@ -27,7 +27,6 @@ class LoanRequestController extends Controller
         $validated = $request->validate([
             'amount' => 'required|numeric|min:100', // Minimum KES 100
             'repayment_period' => 'required|integer|min:7', // Minimum 7 days
-            'interest_rate' => 'required|numeric|min:1|max:50',
             'reason' => 'required|string|max:1000',
         ]);
 
@@ -51,12 +50,14 @@ class LoanRequestController extends Controller
             $wallet->balance -= $requiredCollateral;
             $wallet->save();
 
+            $systemInterestRate = 12.5; // Fixed system interest rate
+
             // Create the loan request
             $loanRequest = LoanRequest::create([
                 'user_id' => $user->id,
                 'amount' => $amountInCents,
                 'repayment_period' => $validated['repayment_period'],
-                'interest_rate' => $validated['interest_rate'],
+                'interest_rate' => $systemInterestRate,
                 'reason' => $validated['reason'],
                 'collateral_locked' => $requiredCollateral,
                 'status' => 'pending_approval',

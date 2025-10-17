@@ -30,6 +30,7 @@
                             <thead>
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase">Borrower</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase">National ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase">Amount</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase">Period</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase">Reason</th>
@@ -40,6 +41,7 @@
                                 @forelse ($loanRequests as $request)
                                     <tr>
                                         <td class="px-6 py-4">{{ $request->borrower->name }}</td>
+                                        <td class="px-6 py-4">{{ $request->borrower->national_id ?? 'N/A' }}</td>
                                         <td class="px-6 py-4">KES {{ number_format($request->amount / 100, 2) }}</td>
                                         <td class="px-6 py-4">{{ $request->repayment_period }} days</td>
                                         <td class="px-6 py-4 text-sm max-w-xs truncate">{{ $request->reason }}</td>
