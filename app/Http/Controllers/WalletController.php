@@ -65,13 +65,10 @@ class WalletController extends Controller
         $successMessage = 'STK Push initiated. Please enter your PIN.';
 
         if ($user->role === 'lender') {
-            // Redirect lender back to their main view (e.g., browse loans)
             return redirect()->route('lender.loans.index')->with('success', $successMessage);
         } else {
-            // Redirect borrower back to their dashboard
             return redirect()->route('dashboard')->with('success', $successMessage);
         }
-        // --- END SMART REDIRECT ---
     }
 
     /**
@@ -135,6 +132,14 @@ class WalletController extends Controller
 
         InitiatePayHeroPayout::dispatch($transaction, $payload);
 
-        return redirect()->route('dashboard')->with('success', "Your withdrawal of KES {$amountInKES} is being processed.");
+        
+        $successMessage = "Your withdrawal of KES {$amountInKES} is being processed.";
+
+        if ($user->role === 'lender') {
+            return redirect()->route('lender.loans.index')->with('success', $successMessage);
+        } else {
+            return redirect()->route('dashboard')->with('success', $successMessage);
+        }
     }
 }
+
