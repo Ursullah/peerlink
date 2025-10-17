@@ -8,11 +8,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-<<<<<<< HEAD
         "laravel/sanctum": "^4.2",
-=======
-        "laravel/sanctum": "^4.0",
->>>>>>> 2187587c2f55526c4e4c7d067fe712828d9e722e
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0"
     },
