@@ -30,12 +30,17 @@
                             {{ __('Manage Loans') }}
                         </x-nav-link>
                     @elseif(Auth::user()->role == 'lender')
-                        <x-nav-link :href="route('lender.loans.index')" :active="request()->routeIs('lender.loans.index')">
-                            {{ __('Browse Loans') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
-                            {{ __('My Investments') }}
-                        </x-nav-link>
+    {{-- Point main link to new dashboard --}}
+    <x-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
+        {{ __('My Dashboard') }}
+    </x-nav-link>
+    {{-- Update browse link route name --}}
+    <x-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+        {{ __('Browse Loans') }}
+    </x-nav-link>
+    <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
+        {{ __('My Investments') }}
+    </x-nav-link>
                     @else
                         {{-- Borrower --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
@@ -122,7 +127,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
 
-                                
+
                                 <button type="submit"
                                     class="block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700">
                                     {{ __('Log Out') }}
@@ -162,13 +167,15 @@
                     {{ __('Manage Loans') }}
                 </x-responsive-nav-link>
             @elseif(Auth::user()->role == 'lender')
-                <x-responsive-nav-link :href="route('lender.loans.index')" :active="request()->routeIs('lender.loans.index')">
-                    {{ __('Browse Loans') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
-                    {{ __('My Investments') }}
-                </x-responsive-nav-link>
-            @else
+         <x-responsive-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
+            {{ __('My Dashboard') }}
+        </x-responsive-nav-link>
+         <x-responsive-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+            {{ __('Browse Loans') }}
+        </x-responsive-nav-link>
+         <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
+            {{ __('My Investments') }}
+        </x-responsive-nav-link>
                 {{-- Borrower --}}
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('My Dashboard') }}
