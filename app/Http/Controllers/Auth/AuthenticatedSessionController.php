@@ -28,16 +28,23 @@ class AuthenticatedSessionController extends Controller
     $request->session()->regenerate();
 
     $user = $request->user();
+    $role = strtolower($user->role);
 
-    // Use direct redirect instead of intended()
-    if ($user->role === 'admin') {
-        return redirect(route('admin.dashboard')); 
-    } elseif ($user->role === 'lender') {
-        return redirect(route('lender.loans.index'));
-    } else {
-        return redirect(route('dashboard'));
+    // Force redirect based on role (ignore Laravel's "intended" behavior)
+    if ($role === 'admin') {
+        return redirect()->to('/admin/dashboard');
+    } elseif ($role === 'lender') {
+        return redirect()->to('/lender/loans');
+    } elseif ($role === 'borrower') {
+        return redirect()->to('/dashboard');
     }
+
+    Auth::logout();
+    return redirect('/')
+        ->withErrors(['role' => 'Your account role is not recognized.']);
 }
+
+
 
     /**
      * Destroy an authenticated session.

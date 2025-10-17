@@ -15,10 +15,11 @@ class IsAdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->role == 'admin') {
+        if (auth()->check() && strtolower(auth()->user()->role) === 'admin') {
             return $next($request);
         }
 
         abort(403, 'Unauthorized Access');
     }
+
 }
