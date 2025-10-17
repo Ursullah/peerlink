@@ -65,7 +65,8 @@ class ProfileController extends Controller
                 ]);
 
                 // Store the new avatar on S3 in the 'avatars' folder, make it public
-                $path = $file->store('avatars', 's3', 'public');
+                $path = $file->storePublicly('avatars', 's3');
+
                 
                 // Store only the path, not the full URL, in the database
                 $user->avatar = $path; 

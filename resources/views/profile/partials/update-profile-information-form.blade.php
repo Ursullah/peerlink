@@ -10,6 +10,17 @@
             {{ __("Update your account's profile information.") }} {{-- Removed email address part for clarity --}}
         </p>
     </header>
+    @if (session('status') === 'profile-updated')
+        <p
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition
+            x-init="setTimeout(() => show = false, 2000)"
+            class="text-sm mt-2 font-medium text-green-600 dark:text-green-400"
+        >
+            {{ __('Profile updated successfully.') }}
+        </p>
+    @endif
 
     {{-- Removed verification form as it's handled separately --}}
     {{-- <form id="send-verification" method="post" action="{{ route('verification.send') }}">@csrf</form> --}}
