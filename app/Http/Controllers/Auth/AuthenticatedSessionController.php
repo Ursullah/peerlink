@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
     if ($role === 'admin') {
         return redirect()->to('/admin/dashboard');
     } elseif ($role === 'lender') {
-        return redirect()->to('/lender/loans');
+        return redirect()->route('lender.dashboard');
     } elseif ($role === 'borrower') {
         return redirect()->to('/dashboard');
     }
