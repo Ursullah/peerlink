@@ -1,9 +1,19 @@
+@php use Illuminate\Support\Facades\Storage; @endphp {{-- Add this line at the top --}}
+
 <nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
+                    {{-- Updated Logo Link based on role --}}
+                    @php
+                        $homeRoute = match(Auth::user()->role) {
+                            'admin' => route('admin.dashboard'),
+                            'lender' => route('lender.loans.index'),
+                            default => route('dashboard'),
+                        };
+                    @endphp
+                    <a href="{{ $homeRoute }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
                     </a>
                 </div>
@@ -23,7 +33,7 @@
                         <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
                             {{ __('My Investments') }}
                         </x-nav-link>
-                    @else
+                    @else {{-- Borrower --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('My Dashboard') }}
                         </x-nav-link>
@@ -45,7 +55,8 @@
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div class="flex items-center">
-                                <img src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('images/default-avatar.png') }}" alt="User Avatar" class="h-8 w-8 rounded-full object-cover mr-2">
+                                {{-- **THIS IS THE UPDATED IMG TAG** --}}
+                                <img src="{{ Auth::user()->avatar ? Storage::disk('s3')->url(Auth::user()->avatar) : asset('images/default-avatar.png') }}" alt="User Avatar" class="h-8 w-8 rounded-full object-cover mr-2">
                                 <div>{{ Auth::user()->name }}</div>
                             </div>
 
@@ -109,7 +120,7 @@
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email ?? 'No Email' }}</div> {{-- Added fallback for email --}}
             </div>
 
             <div class="mt-3 space-y-1">
