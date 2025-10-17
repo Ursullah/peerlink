@@ -5,13 +5,19 @@ use App\Http\Controllers\LoanRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth; // <-- 1. ADDED THIS IMPORT
+use Illuminate\Support\Facades\Auth;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// BORROWER ROUTES
+// BORROWER-ONLY ROUTES
 Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
@@ -23,7 +29,7 @@ Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
         ];
         $recentTransactions = $user->transactions()->latest()->take(5)->get();
         return view('dashboard', compact('loanRequests', 'stats', 'recentTransactions'));
-    })->name('dashboard'); // <-- 2. REMOVED DUPLICATE MIDDLEWARE
+    })->name('dashboard');
 
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
@@ -45,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
 // ADMIN ROUTES
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
@@ -59,8 +66,6 @@ Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(
     Route::post('/loans/{loanRequest}/fund', [App\Http\Controllers\Lender\LoanController::class, 'fund'])->name('loans.fund');
     Route::get('/my-investments', [App\Http\Controllers\Lender\LoanController::class, 'investments'])->name('loans.investments');
 });
-
-// 3. REMOVED WEBHOOK ROUTE FROM HERE
 
 require __DIR__.'/auth.php';
 
