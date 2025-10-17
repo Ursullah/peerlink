@@ -7,7 +7,7 @@
 
         <!-- phone number -->
         <div>
-            <x-input-label for="phone_number" :value="__('phone_number')" />
+            <x-input-label for="phone_number" :value="__('Phone number')" />
             <x-text-input id="phone_number" class="block mt-1 w-full" type="text" name="phone_number" :value="old('phone_number')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
         </div>
@@ -43,5 +43,16 @@
                 {{ __('Log in') }}
             </x-primary-button>
         </div>
+         <!-- Register Link -->
+        @if (Route::has('register'))
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ __("Don't have an account?") }}
+                    <a href="{{ route('register') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                        {{ __('Register here') }}
+                    </a>
+                </p>
+            </div>
+        @endif
     </form>
 </x-guest-layout>
