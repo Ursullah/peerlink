@@ -35,25 +35,37 @@
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Recent Transactions</h3>
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse ($recentTransactions as $transaction)
-                            <li class="py-3">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ str_replace('_', ' ', $transaction->type) }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-semibold @if($transaction->amount < 0) text-red-500 @else text-green-500 @endif">
-                                            KES {{ number_format(abs($transaction->amount / 100), 2) }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $transaction->created_at->diffForHumans() }}</p>
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="py-3 text-center text-gray-500 dark:text-gray-400">No transactions yet.</li>
-                        @endforelse
-                    </ul>
+        @forelse ($recentTransactions as $transaction)
+            <li class="py-3">
+                <div class="flex items-center justify-between">
+                    {{-- User and Transaction Type --}}
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $transaction->user->name }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ str_replace('_', ' ', ucfirst($transaction->type)) }}</p>
+                    </div>
+                    {{-- Amount and Status --}}
+                    <div class="text-right">
+                        <p class="text-sm font-semibold @if($transaction->amount < 0) text-red-500 @else text-green-500 @endif">
+                            KES {{ number_format(abs($transaction->amount / 100), 2) }}
+                        </p>
+                        {{-- ** STATUS BADGE ** --}}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            @if($transaction->status == 'pending') bg-yellow-100 text-yellow-800 @endif
+                            @if($transaction->status == 'successful') bg-green-100 text-green-800 @endif
+                            @if($transaction->status == 'failed') bg-red-100 text-red-800 @endif">
+                            {{ ucfirst($transaction->status) }}
+                        </span>
+                    </div>
+                </div>
+                
+                @if($transaction->status == 'failed' && $transaction->failure_reason)
+                     <p class="mt-1 text-xs text-red-500">Reason: {{ $transaction->failure_reason }}</p>
+                @endif
+            </li>
+        @empty
+            <li class="py-3 text-center text-gray-500 dark:text-gray-400">No transactions yet.</li>
+        @endforelse
+    </ul>
                 </div>
 
                 <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">

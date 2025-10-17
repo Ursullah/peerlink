@@ -176,6 +176,7 @@
          <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
             {{ __('My Investments') }}
         </x-responsive-nav-link>
+        @else
                 {{-- Borrower --}}
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('My Dashboard') }}
