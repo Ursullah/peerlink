@@ -46,7 +46,7 @@ class PayHeroWebhookController extends Controller
         }
         
         // 2. Handle payment status
-        if ($payload['status'] === 'SUCCESSFUL') {
+        if (isset($payload['status']) && $payload['status'] === true) {
             try {
                 DB::transaction(function () use ($transaction) {
                     // Check the type of transaction and call the correct handler
