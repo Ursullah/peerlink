@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-// Make sure Storage facade is imported
+
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
