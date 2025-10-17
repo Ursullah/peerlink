@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use App\Services\PayHeroService;
+use Illuminate\Http\Request;
 
 class PayHeroAdminController extends Controller
 {

@@ -14,11 +14,11 @@ class IsAdminMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
-{
-    if (auth()->check() && auth()->user()->role == 'admin') {
-        return $next($request);
-    }
+    {
+        if (auth()->check() && auth()->user()->role == 'admin') {
+            return $next($request);
+        }
 
-    abort(403, 'Unauthorized Access');
-}
+        abort(403, 'Unauthorized Access');
+    }
 }

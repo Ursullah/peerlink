@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Loan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http; 
-use Illuminate\Support\Facades\Log;
 use App\Jobs\InitiatePayHeroPayment;
+use App\Models\Loan;
 use Illuminate\Support\Str;
-
 
 class LoanController extends Controller
 {
@@ -26,7 +21,7 @@ class LoanController extends Controller
         $provider = config('payhero.provider', 'm-pesa');
 
         // 1. Generate our unique ID
-        $externalRef = 'REPAY_' . $loan->id . '_' . Str::random(8);
+        $externalRef = 'REPAY_'.$loan->id.'_'.Str::random(8);
 
         // 2. Create the pending transaction
         $transaction = $borrower->transactions()->create([

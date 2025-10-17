@@ -19,27 +19,27 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-/**
- * Handle an incoming authentication request.
- */
-public function store(LoginRequest $request): RedirectResponse
-{
-    $request->authenticate();
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
 
-    $request->session()->regenerate();
+        $request->session()->regenerate();
 
-    // Role-based redirect
-    $user = $request->user();
-    if ($user && $user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
+        // Role-based redirect
+        $user = $request->user();
+        if ($user && $user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user && $user->role === 'lender') {
+            return redirect()->route('lender.loans.index');
+        }
+
+        // Default redirect to borrower dashboard
+        return redirect()->intended(route('dashboard'));
     }
-    if ($user && $user->role === 'lender') {
-        return redirect()->route('lender.loans.index');
-    }
-
-    // Default redirect to borrower dashboard
-    return redirect()->intended(route('dashboard'));
-}
 
     /**
      * Destroy an authenticated session.

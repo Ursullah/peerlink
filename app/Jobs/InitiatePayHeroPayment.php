@@ -2,13 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Services\PayHeroService;
 use App\Models\Transaction;
+use App\Services\PayHeroService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class InitiatePayHeroPayment implements ShouldQueue
@@ -16,6 +16,7 @@ class InitiatePayHeroPayment implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $transaction;
+
     public $payload;
 
     public function __construct(Transaction $transaction, array $payload = [])
@@ -27,8 +28,9 @@ class InitiatePayHeroPayment implements ShouldQueue
     public function handle(PayHeroService $payHero)
     {
         // Transaction is already loaded
-        if (!$this->transaction) {
+        if (! $this->transaction) {
             Log::error('InitiatePayHeroPayment: transaction not found');
+
             return;
         }
 
@@ -37,7 +39,7 @@ class InitiatePayHeroPayment implements ShouldQueue
 
             if ($response && $response->successful()) {
                 $body = $response->json();
-                
+
                 // Get the real PayHero ID
                 $payheroId = $body['id'] ?? $body['reference'] ?? $body['CheckoutRequestID'] ?? null;
 
@@ -56,9 +58,9 @@ class InitiatePayHeroPayment implements ShouldQueue
                 Log::error('InitiatePayHeroPayment: initiation failed', ['transaction' => $this->transaction->id, 'status' => $status, 'body' => $body]);
                 $this->transaction->status = 'failed';
                 $this->transaction->save();
-                
+
                 if ($response && $response->serverError()) {
-                    throw new \Exception('Transient PayHero error: ' . $response->body());
+                    throw new \Exception('Transient PayHero error: '.$response->body());
                 }
             }
         } catch (\Throwable $ex) {

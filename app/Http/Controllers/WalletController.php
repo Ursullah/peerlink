@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\InitiatePayHeroPayment;
+use App\Jobs\InitiatePayHeroPayout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use App\Jobs\InitiatePayHeroPayment;
-use App\Jobs\InitiatePayHeroPayout; 
-use Illuminate\Support\Str; 
+use Illuminate\Support\Str;
 
 class WalletController extends Controller
 {
@@ -26,9 +24,9 @@ class WalletController extends Controller
         $phoneNumber = preg_replace('/^0/', '254', $user->phone_number);
         $channelId = config('payhero.channel_id');
         $provider = config('payhero.provider', 'm-pesa');
-        
+
         // 1. Generate our unique ID
-        $externalRef = 'DEPOSIT_' . $user->id . '_' . Str::random(8);
+        $externalRef = 'DEPOSIT_'.$user->id.'_'.Str::random(8);
 
         // 2. Create the pending transaction
         $transaction = $user->transactions()->create([
@@ -64,13 +62,13 @@ class WalletController extends Controller
         $wallet = $user->wallet;
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:50|max:' . ($wallet->balance / 100),
+            'amount' => 'required|numeric|min:50|max:'.($wallet->balance / 100),
         ]);
 
         $amountInKES = (float) $validated['amount'];
         $amountInCents = $amountInKES * 100;
-        $externalRef = 'WITHDRAW_' . $user->id . '_' . Str::random(8);
-        
+        $externalRef = 'WITHDRAW_'.$user->id.'_'.Str::random(8);
+
         $transaction = null; // Initialize variable
 
         DB::transaction(function () use ($user, $wallet, $amountInCents, $externalRef, &$transaction) {

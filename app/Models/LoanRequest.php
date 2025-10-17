@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class LoanRequest extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
-        'user_id', 
-        'amount', 
-        'repayment_period', 
-        'interest_rate', 
-        'reason', 
+        'user_id',
+        'amount',
+        'repayment_period',
+        'interest_rate',
+        'reason',
         'collateral_locked',
-        'status'
+        'status',
     ];
 
     /**

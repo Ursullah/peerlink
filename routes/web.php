@@ -1,9 +1,10 @@
 <?php
+
 use App\Http\Controllers\LoanController;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoanRequestController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WalletController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -12,35 +13,35 @@ Route::get('/', function () {
 // BORROWER ROUTES
 Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
     Route::get('/dashboard', function () {
-    $user = Auth::user();
+        $user = Auth::user();
 
-    // Fetch loan requests
-    $loanRequests = $user->loanRequests()->with('loan')->latest()->get();
+        // Fetch loan requests
+        $loanRequests = $user->loanRequests()->with('loan')->latest()->get();
 
-    // Fetch stats for the dashboard cards
-    $stats = [
-        'active_loan_count' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', 'active')->count(),
-        'total_borrowed' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', '!=', 'defaulted')->sum('principal_amount'),
-        'reputation_score' => $user->reputation_score,
-    ];
+        // Fetch stats for the dashboard cards
+        $stats = [
+            'active_loan_count' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', 'active')->count(),
+            'total_borrowed' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', '!=', 'defaulted')->sum('principal_amount'),
+            'reputation_score' => $user->reputation_score,
+        ];
 
-    // Fetch recent wallet transactions
-    $recentTransactions = $user->transactions()->latest()->take(5)->get();
+        // Fetch recent wallet transactions
+        $recentTransactions = $user->transactions()->latest()->take(5)->get();
 
-    return view('dashboard', [
-        'loanRequests' => $loanRequests,
-        'stats' => $stats,
-        'recentTransactions' => $recentTransactions,
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+        return view('dashboard', [
+            'loanRequests' => $loanRequests,
+            'stats' => $stats,
+            'recentTransactions' => $recentTransactions,
+        ]);
+    })->middleware(['auth', 'verified'])->name('dashboard');
 
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
     Route::post('/loans/{loan}/repay', [LoanController::class, 'repay'])->name('loans.repay');
-    
+
     Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
     Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
-    
+
     Route::get('/wallet/withdraw', [WalletController::class, 'showWithdrawForm'])->name('wallet.withdraw.form');
     Route::post('/wallet/withdraw', [WalletController::class, 'processWithdraw'])->name('wallet.withdraw.process');
 });

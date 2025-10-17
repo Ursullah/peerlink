@@ -16,6 +16,7 @@ class LoanController extends Controller
     public function index()
     {
         $loanRequests = LoanRequest::where('status', 'pending_approval')->latest()->get();
+
         return view('admin.loans.index', compact('loanRequests'));
     }
 
@@ -25,6 +26,7 @@ class LoanController extends Controller
     public function approve(LoanRequest $loanRequest)
     {
         $loanRequest->update(['status' => 'active']);
+
         return back()->with('success', 'Loan request has been approved and is now visible to lenders.');
     }
 

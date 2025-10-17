@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\LoanRequest;
 use App\Models\Transaction;
 use Illuminate\Http\Request;

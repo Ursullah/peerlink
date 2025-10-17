@@ -13,11 +13,11 @@ class IsBorrowerMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-   public function handle(Request $request, Closure $next): Response
-{
-    if (auth()->check() && auth()->user()->role == 'borrower') {
-        return $next($request);
+    public function handle(Request $request, Closure $next): Response
+    {
+        if (auth()->check() && auth()->user()->role == 'borrower') {
+            return $next($request);
+        }
+        abort(403, 'This action is unauthorized.');
     }
-    abort(403, 'This action is unauthorized.');
-}
 }

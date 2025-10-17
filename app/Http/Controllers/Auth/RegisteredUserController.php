@@ -9,10 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -31,7 +30,7 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-    
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             // Use Rule::unique() for phone_number
@@ -60,13 +59,10 @@ class RegisteredUserController extends Controller
         ]);
 
         $user->wallet()->create(['balance' => 0]);
-        
-        
 
         event(new Registered($user));
 
         Auth::login($user);
-        
 
         // Redirect based on role
         if ($user->role === 'admin') {
@@ -75,6 +71,7 @@ class RegisteredUserController extends Controller
         if ($user->role === 'lender') {
             return redirect()->route('lender.loans.index');
         }
+
         return redirect(route('dashboard', absolute: false));
     }
 }

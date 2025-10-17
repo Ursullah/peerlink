@@ -18,7 +18,7 @@ class Loan extends Model
         'total_repayable',
         'amount_repaid',
         'status',
-        'due_date'
+        'due_date',
     ];
 
     /**
