@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Facades\Log;
 use App\Jobs\InitiatePayHeroPayment;
-use Illuminate\Support\Str; // Import this
+use Illuminate\Support\Str;
+
 
 class LoanController extends Controller
 {

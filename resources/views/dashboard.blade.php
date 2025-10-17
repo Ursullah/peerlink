@@ -75,20 +75,30 @@
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                         <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Recent Activity</h3>
                         <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse ($recentTransactions as $transaction)
-                                <li class="py-3">
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ str_replace('_', ' ', ucfirst($transaction->type)) }}</p>
-                                        <p class="text-sm font-semibold @if($transaction->amount < 0) text-red-500 @else text-green-500 @endif">
-                                            KES {{ number_format(abs($transaction->amount / 100), 2) }}
-                                        </p>
-                                    </div>
-                                    <p class="text-xs text-gray-500 dark:text-gray-500">{{ $transaction->created_at->diffForHumans() }}</p>
-                                </li>
-                            @empty
-                                <li class="py-3 text-center text-gray-500 dark:text-gray-400">No recent activity.</li>
-                            @endforelse
-                        </ul>
+    @forelse ($recentTransactions as $transaction)
+        <li class="py-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200">{{ str_replace('_', ' ', ucfirst($transaction->type)) }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $transaction->created_at->diffForHumans() }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-semibold @if($transaction->amount < 0) text-red-500 @else text-green-500 @endif">
+                        KES {{ number_format(abs($transaction->amount / 100), 2) }}
+                    </p>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        @if($transaction->status == 'pending') bg-yellow-100 text-yellow-800 @endif
+                        @if($transaction->status == 'successful') bg-green-100 text-green-800 @endif
+                        @if($transaction->status == 'failed') bg-red-100 text-red-800 @endif">
+                        {{ ucfirst($transaction->status) }}
+                    </span>
+                </div>
+            </div>
+        </li>
+    @empty
+        <li class="py-3 text-center text-gray-500 dark:text-gray-400">No recent activity.</li>
+    @endforelse
+</ul>
                     </div>
                 </div>
 

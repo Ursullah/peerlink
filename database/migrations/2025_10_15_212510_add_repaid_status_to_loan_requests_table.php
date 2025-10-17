@@ -11,10 +11,13 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        // Add 'repaid' to the ENUM list
-        DB::statement("ALTER TABLE loan_requests CHANGE COLUMN status status ENUM('pending_approval', 'active', 'funded', 'rejected', 'repaid') NOT NULL DEFAULT 'pending_approval'");
-    }
+{
+    // Use Schema Builder for better compatibility
+    Schema::table('loan_requests', function (Blueprint $table) {
+        // Change the column type to string, which SQLite handles easily
+        $table->string('status')->default('pending_approval')->change(); 
+    });
+}
 
     /**
      * Reverse the migrations.

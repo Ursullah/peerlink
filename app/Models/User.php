@@ -2,23 +2,25 @@
 
 namespace App\Models;
 
+// 1. Import the missing HasFactory trait
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    // 2. Use both traits correctly (remove the duplicate)
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * ...
      */
     protected $fillable = [
         'name',
-        'avatar',
         'phone_number',
         'national_id',
+        'email', // This is correct
         'password',
     ];
 
@@ -31,6 +33,8 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    // --- Relationships ---
 
     // A User has one Wallet
     public function wallet()

@@ -31,25 +31,32 @@ class RegisteredUserController extends Controller
 {
     $request->validate([
         'name' => ['required', 'string', 'max:255'],
-        // Use phone_number for validation instead of email
         'phone_number' => ['required', 'string', 'max:255', 'unique:'.User::class],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class], // Add this validation
         'password' => ['required', 'confirmed', Rules\Password::defaults()],
     ]);
 
     $user = User::create([
         'name' => $request->name,
-        // Use phone_number for creation instead of email
         'phone_number' => $request->phone_number,
+        'email' => $request->email, // Add this to save the email
         'password' => Hash::make($request->password),
     ]);
     
-    // Create a wallet for the new user upon registration
+    // Create a wallet for the new user
     $user->wallet()->create(['balance' => 0]);
 
     event(new Registered($user));
 
     Auth::login($user);
 
+    // Redirect based on role
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+    if ($user->role === 'lender') {
+        return redirect()->route('lender.loans.index');
+    }
     return redirect(route('dashboard', absolute: false));
 }
 }

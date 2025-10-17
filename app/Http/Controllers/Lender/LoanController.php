@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Lender;
 
+use App\Notifications\LoanFundedNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
 use App\Models\LoanRequest;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
 
 class LoanController extends Controller
 {
@@ -55,7 +57,7 @@ class LoanController extends Controller
 
             // 6. Create the official Loan record
             $interestAmount = $loanAmount * ($loanRequest->interest_rate / 100);
-            Loan::create([
+            $loan = Loan::create([
                 'loan_request_id' => $loanRequest->id,
                 'borrower_id' => $borrower->id,
                 'lender_id' => $lender->id,
@@ -64,6 +66,7 @@ class LoanController extends Controller
                 'total_repayable' => $loanAmount + $interestAmount,
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
             ]);
+            $borrower->notify(new LoanFundedNotification($loan));
 
             // 7. Log transactions for both parties
             Transaction::create([
