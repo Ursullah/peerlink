@@ -54,7 +54,7 @@ class PayHeroWebhookController extends Controller
             $responseData = is_string($data['response']) ? json_decode($data['response'], true) : $data['response'];
             if ($responseData) {
                 $externalRef = $responseData['User_Reference'] ?? $responseData['external_reference'] ?? null;
-                $status = $responseData['Service_status'] ?? $responseData['status'] ?? null;
+                $status = $responseData['woocommerce_payment_status'] ?? $responseData['Service_status'] ?? $responseData['status'] ?? null;
                 $transactionId = $responseData['Transaction_Reference'] ?? $responseData['transaction_id'] ?? null;
             }
         }
