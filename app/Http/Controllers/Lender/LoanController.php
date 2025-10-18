@@ -66,6 +66,7 @@ class LoanController extends Controller
                 'total_repayable' => $loanAmount + $interestAmount,
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
             ]);
+            $loan->load('borrower');
             $borrower->notify(new LoanFundedNotification($loan));
 
             // 7. Log transactions for both parties
