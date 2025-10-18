@@ -135,11 +135,12 @@ class WalletController extends Controller
         
         $successMessage = "Your withdrawal of KES {$amountInKES} is being processed.";
 
-        if ($user->role === 'lender') {
-            return redirect()->route('lender.loans.index')->with('success', $successMessage);
-        } else {
-            return redirect()->route('dashboard')->with('success', $successMessage);
-        }
+    if ($user->role === 'lender') {
+        // Redirect to the correct lender dashboard route
+        return redirect()->route('lender.dashboard')->with('success', $successMessage);
+    } else {
+        return redirect()->route('dashboard')->with('success', $successMessage);
+    }
     }
 }
 
