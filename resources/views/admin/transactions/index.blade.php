@@ -43,18 +43,19 @@
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse ($transactions as $transaction)
                                     <tr class="text-gray-800 dark:text-gray-300">
+                                        {{-- User Column --}}
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ $transaction->user->name ?? 'N/A' }}
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ $transaction->user->email ?? '' }}</div>
                                         </td>
+
+                                        {{-- Other Columns (Date, Type, Amount, Status) --}}
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ $transaction->created_at->format('d M, Y g:i A') }}
-                                        </td>
+                                            {{ $transaction->created_at->format('d M, Y g:i A') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ str_replace('_', ' ', ucfirst($transaction->type)) }}
-                                        </td>
+                                            {{ str_replace('_', ' ', ucfirst($transaction->type)) }}</td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium @if ($transaction->amount < 0) text-red-500 @else text-green-500 @endif">
                                             {{ number_format(abs($transaction->amount / 100), 2) }}
@@ -69,7 +70,7 @@
                                             </span>
                                         </td>
 
-                                        {{--  UPDATED DETAILS COLUMN --}}
+                                        {{-- START: IMPROVED DETAILS COLUMN --}}
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                                             @if ($transaction->status == 'failed' && $transaction->failure_reason)
@@ -79,7 +80,19 @@
                                                     @case('loan_funding')
                                                         {{-- Lender's Debit --}}
                                                         @if ($transaction->transactionable)
-                                                            To: {{ $transaction->transactionable->borrower->name ?? 'N/A' }}
+                                                            Funding for: <span
+                                                                class="font-semibold">{{ $transaction->transactionable->borrower->name ?? 'N/A' }}</span>
+                                                            (Loan #{{ $transaction->transactionable_id }})
+                                                        @else
+                                                            <span class="text-gray-400 italic">Missing loan link</span>
+                                                        @endif
+                                                    @break
+
+                                                    @case('loan_received')
+                                                        {{-- Borrower's Credit --}}
+                                                        @if ($transaction->transactionable)
+                                                            Loan from: <span
+                                                                class="font-semibold">{{ $transaction->transactionable->lender->name ?? 'N/A' }}</span>
                                                             (Loan #{{ $transaction->transactionable_id }})
                                                         @else
                                                             <span class="text-gray-400 italic">Missing loan link</span>
@@ -89,7 +102,8 @@
                                                     @case('repayment_received')
                                                         {{-- Lender's Credit --}}
                                                         @if ($transaction->transactionable)
-                                                            From: {{ $transaction->transactionable->borrower->name ?? 'N/A' }}
+                                                            Repayment from: <span
+                                                                class="font-semibold">{{ $transaction->transactionable->borrower->name ?? 'N/A' }}</span>
                                                             (Loan #{{ $transaction->transactionable_id }})
                                                         @else
                                                             <span class="text-gray-400 italic">Missing loan link</span>
@@ -99,17 +113,8 @@
                                                     @case('repayment')
                                                         {{-- Borrower's Debit --}}
                                                         @if ($transaction->transactionable)
-                                                            To: {{ $transaction->transactionable->lender->name ?? 'N/A' }}
-                                                            (Loan #{{ $transaction->transactionable_id }})
-                                                        @else
-                                                            <span class="text-gray-400 italic">Missing loan link</span>
-                                                        @endif
-                                                    @break
-
-                                                    {{-- Assuming the borrower's credit is 'loan_received' or similar --}}
-                                                    @case('loan_received')
-                                                        @if ($transaction->transactionable)
-                                                            From: {{ $transaction->transactionable->lender->name ?? 'N/A' }}
+                                                            Repayment to: <span
+                                                                class="font-semibold">{{ $transaction->transactionable->lender->name ?? 'N/A' }}</span>
                                                             (Loan #{{ $transaction->transactionable_id }})
                                                         @else
                                                             <span class="text-gray-400 italic">Missing loan link</span>
@@ -119,7 +124,8 @@
                                                     @case('collateral_lock')
                                                     @case('collateral_release')
                                                         @if ($transaction->transactionable && $transaction->transactionable->borrower)
-                                                            For: {{ $transaction->transactionable->borrower->name }}
+                                                            For Request by: <span
+                                                                class="font-semibold">{{ $transaction->transactionable->borrower->name }}</span>
                                                             (Req #{{ $transaction->transactionable_id }})
                                                         @else
                                                             Request #{{ $transaction->transactionable_id }}
@@ -128,10 +134,19 @@
 
                                                     @case('deposit')
                                                         @if ($transaction->payhero_transaction_id)
-                                                            Ref: {{ $transaction->payhero_transaction_id }}
+                                                            <span class="font-semibold">M-Pesa Deposit</span>
+                                                            (Ref: {{ $transaction->payhero_transaction_id }})
                                                         @else
-                                                            {{-- We can improve this in Step 2 --}}
-                                                            <span class="text-gray-400 italic">Wallet Deposit</span>
+                                                            <span class="text-gray-400 italic">Internal Wallet Credit</span>
+                                                        @endif
+                                                    @break
+
+                                                    @case('withdrawal')
+                                                        @if ($transaction->payhero_transaction_id)
+                                                            <span class="font-semibold">M-Pesa Withdrawal</span>
+                                                            (Ref: {{ $transaction->payhero_transaction_id }})
+                                                        @else
+                                                            <span class="text-gray-400 italic">Internal Wallet Debit</span>
                                                         @endif
                                                     @break
 
@@ -139,13 +154,12 @@
                                                         @if ($transaction->payhero_transaction_id)
                                                             Ref: {{ $transaction->payhero_transaction_id }}
                                                         @else
-                                                            {{-- Catches 'withdrawal', etc. --}}
                                                             <span class="text-gray-400">N/A</span>
                                                         @endif
                                                 @endswitch
                                             @endif
                                         </td>
-                                        {{--  UPDATED DETAILS COLUMN --}}
+                                        {{-- IMPROVED DETAILS COLUMN --}}
 
                                     </tr>
                                     @empty
