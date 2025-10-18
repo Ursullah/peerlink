@@ -182,7 +182,7 @@
                 <x-responsive-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
                     {{ __('My Dashboard') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+                <x-responsive-nav-link :href="route('lender.loans.index')" :active="request()->routeIs('lender.loans.index')">
                     {{ __('Browse Loans') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
