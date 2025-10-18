@@ -30,21 +30,27 @@
                             {{ __('Manage Loans') }}
                         </x-nav-link>
                     @elseif(Auth::user()->role == 'lender')
-    {{-- Point main link to new dashboard --}}
-    <x-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
-        {{ __('My Dashboard') }}
-    </x-nav-link>
-    {{-- Update browse link route name --}}
-    <x-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
-        {{ __('Browse Loans') }}
-    </x-nav-link>
-    <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
-        {{ __('My Investments') }}
-    </x-nav-link>
+                        {{-- Point main link to new dashboard --}}
+                        <x-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
+                            {{ __('My Dashboard') }}
+                        </x-nav-link>
+                        {{-- Update browse link route name --}}
+                        <x-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+                            {{ __('Browse Loans') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
+                            {{ __('My Investments') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index')">
+                            {{ __('My Transactions') }}
+                        </x-nav-link>
                     @else
                         {{-- Borrower --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('My Dashboard') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index')">
+                            {{ __('My Transactions') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -167,19 +173,25 @@
                     {{ __('Manage Loans') }}
                 </x-responsive-nav-link>
             @elseif(Auth::user()->role == 'lender')
-         <x-responsive-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
-            {{ __('My Dashboard') }}
-        </x-responsive-nav-link>
-         <x-responsive-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
-            {{ __('Browse Loans') }}
-        </x-responsive-nav-link>
-         <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
-            {{ __('My Investments') }}
-        </x-responsive-nav-link>
-        @else
+                <x-responsive-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
+                    {{ __('My Dashboard') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+                    {{ __('Browse Loans') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
+                    {{ __('My Investments') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index')">
+                    {{ __('My Transactions') }}
+                </x-responsive-nav-link>
+            @else
                 {{-- Borrower --}}
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('My Dashboard') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index')">
+                    {{ __('My Transactions') }}
                 </x-responsive-nav-link>
             @endif
         </div>
