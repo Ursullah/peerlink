@@ -29,6 +29,9 @@
                         <x-nav-link :href="route('admin.loans.index')" :active="request()->routeIs('admin.loans.index')">
                             {{ __('Manage Loans') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.transactions.index')" :active="request()->routeIs('admin.transactions.index')">
+                            {{ __('All Transactions') }}
+                        </x-nav-link>
                     @elseif(Auth::user()->role == 'lender')
                         {{-- Point main link to new dashboard --}}
                         <x-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">
@@ -171,6 +174,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.loans.index')" :active="request()->routeIs('admin.loans.index')">
                     {{ __('Manage Loans') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.transactions.index')" :active="request()->routeIs('admin.transactions.index')">
+                    {{ __('All Transactions') }}
                 </x-responsive-nav-link>
             @elseif(Auth::user()->role == 'lender')
                 <x-responsive-nav-link :href="route('lender.dashboard')" :active="request()->routeIs('lender.dashboard')">

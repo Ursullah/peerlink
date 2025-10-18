@@ -4,9 +4,10 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoanRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WalletController;
-use App\Http\Controllers\TransactionController; // Ensure this is imported
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 
 
 /*
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/loans', [App\Http\Controllers\Admin\LoanController::class, 'index'])->name('loans.index');
     Route::patch('/loans/{loanRequest}/approve', [App\Http\Controllers\Admin\LoanController::class, 'approve'])->name('loans.approve');
     Route::patch('/loans/{loanRequest}/reject', [App\Http\Controllers\Admin\LoanController::class, 'reject'])->name('loans.reject');
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
 });
 
 // LENDER ROUTES
