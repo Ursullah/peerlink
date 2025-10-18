@@ -1,13 +1,91 @@
-PeerLink - P2P Micro-Lending PlatformPeerLink is a digital micro-lending platform that connects individuals who need small loans with others willing to lend. It brings transparency, trust, and automation to peer lending by using PayHero for instant payments, introducing digital collateral, tracking repayments, and building a user reputation system.This project is built with the Laravel framework and demonstrates a complete, end-to-end lending cycle with real-world payment integrations, role-based access, and automated backend processes.✨ Core FeaturesBorrower FeaturesRegister as a Borrower.Profile Management with avatar uploads to Amazon S3.Create Loan Requests with a system-set interest rate.Wallet Management: Deposit funds (via real PayHero STK Push) and request withdrawals.Automatic Collateral Locking: A percentage of the loan amount is locked in the wallet before the request goes live.Repay Loan: Repay instantly from wallet balance or fall back to an STK push.Reputation Score: Score increases with successful repayments.Lender FeaturesRegister as a Lender.Browse Approved Loan Requests: View a marketplace of active loan requests from borrowers.Fund Loans: Instantly transfer funds from your wallet to a borrower to activate a loan.Track Investments: A dedicated dashboard shows all funded loans, their status (active, repaid), and total profit earned.Wallet Management: Deposit and withdraw funds.Platform (Admin) FeaturesRich Dashboard: View key platform statistics (total users, money lent), a chart of loans funded per day, a list of all users, and a feed of recent transactions with their status (pending, successful, failed).Loan Approval System: Review and approve or reject new loan requests.Automated Processes: The system handles overdue loan penalties and transaction timeouts automatically.🏗️ System Architecture & LogicPeerLink is built on a modern, asynchronous architecture to provide a fast user experience and reliable transaction processing.Frontend: Laravel Blade with Tailwind CSS and Alpine.js for interactivity.Backend: Laravel 11 (PHP 8.2+).Database: Hosted MySQL on Railway.app for shared team development.Payments: PayHero Kenya for both collections (STK Push) and payouts.File Storage: Amazon S3 for storing user profile pictures.Queues: Laravel's database queue driver for asynchronous processing of payments and notifications.Payment Flow (Asynchronous)Initiation: A user action (deposit, repay) does not call the PayHero API directly. Instead, it creates a pending transaction in the database and dispatches a Job (e.g., InitiatePayHeroPayment) to the queue.User Response: The user gets an immediate response ("Your request is being processed...").Queue Worker: A background queue:work process picks up the Job and makes the actual API call to PayHero using the PayHeroService.Confirmation: PayHero sends a webhook to a public URL (managed via Ngrok in development) to confirm if the payment was SUCCESSFUL or FAILED.Webhook Handler: The PayHeroWebhookController receives this notification, verifies it, and updates the transaction status, wallet balances, and loan statuses accordingly.🛠️ Local Development SetupPrerequisitesPHP (8.2+)ComposerNode.js & npmAn active Railway.app account for the database.An active PayHero Kenya merchant account.An AWS account with an S3 bucket and IAM credentials.Ngrok for testing webhooks locally.Installation StepsClone the repository:git clone [https://github.com/SingasonSimon/peerlink.git](https://github.com/SingasonSimon/peerlink.git)
+# 🚀 PeerLink - P2P Micro-Lending Platform
+
+**PeerLink** is a digital micro-lending platform that connects individuals who need small loans with others willing to lend.  
+It brings **transparency**, **trust**, and **automation** to peer lending by using **PayHero** for instant payments, introducing **digital collateral**, **tracking repayments**, and building a **user reputation system**.
+
+This project is built with the **Laravel framework** and demonstrates a complete, end-to-end lending cycle with real-world payment integrations, role-based access, and automated backend processes.
+
+---
+
+## ✨ Core Features
+
+### 👤 Borrower Features
+- Register as a Borrower.
+- Profile Management with avatar uploads to **Amazon S3**.
+- Create Loan Requests with a system-set interest rate.
+- **Wallet Management:** Deposit funds (via real **PayHero STK Push**) and request withdrawals.
+- **Automatic Collateral Locking:** A percentage of the loan amount is locked in the wallet before the request goes live.
+- **Repay Loan:** Repay instantly from wallet balance or via STK Push.
+- **Reputation Score:** Score increases with successful repayments.
+
+---
+
+### 💰 Lender Features
+- Register as a Lender.
+- **Browse Approved Loan Requests:** View a marketplace of active loan requests from borrowers.
+- **Fund Loans:** Instantly transfer funds from your wallet to a borrower to activate a loan.
+- **Track Investments:** Dashboard showing funded loans, their status (active/repaid), and total profit earned.
+- **Wallet Management:** Deposit and withdraw funds.
+
+---
+
+### 🛠️ Platform (Admin) Features
+- **Rich Dashboard:** View key stats — total users, total money lent, daily loan charts, user list, and transaction feed.
+- **Loan Approval System:** Approve or reject new loan requests.
+- **Automated Processes:** The system automatically handles overdue loan penalties and transaction timeouts.
+
+---
+
+## 🧩 System Architecture & Logic
+
+**PeerLink** is built on a modern, asynchronous architecture for speed and reliability.
+
+| Component | Technology |
+|------------|-------------|
+| Frontend | Laravel Blade + Tailwind CSS + Alpine.js |
+| Backend | Laravel 11 (PHP 8.2+) |
+| Database | MySQL (Hosted on Railway.app) |
+| Payments | PayHero Kenya (STK Push & Payouts) |
+| File Storage | Amazon S3 |
+| Queues | Laravel Database Queue Driver |
+
+---
+
+## 💳 Payment Flow (Asynchronous)
+
+1. **Initiation:**  
+   A user action (deposit, repay) creates a pending transaction in the database and dispatches a Job (e.g., `InitiatePayHeroPayment`) to the queue.
+2. **Immediate Response:**  
+   The user sees `"Your request is being processed..."`.
+3. **Queue Worker:**  
+   A background `queue:work` process makes the actual API call to **PayHero** via the `PayHeroService`.
+4. **Confirmation:**  
+   PayHero sends a webhook to a public URL (managed via **Ngrok** in development) confirming whether the payment was successful or failed.
+5. **Webhook Handler:**  
+   The `PayHeroWebhookController` receives the notification, verifies it, and updates transaction status, wallet balances, and loan statuses accordingly.
+
+---
+
+## 🧰 Local Development Setup
+
+### ✅ Prerequisites
+- PHP **8.2+**
+- Composer
+- Node.js & npm
+- Railway.app account (for MySQL database)
+- PayHero Kenya merchant account
+- AWS S3 bucket with IAM credentials
+- Ngrok (for local webhook testing)
+
+---
+
+### ⚙️ Installation Steps
+
+```bash
+# Clone the repository
+git clone https://github.com/SingasonSimon/peerlink.git
 cd peerlink
-Install dependencies:composer install
+
+# Install dependencies
+composer install
 npm install
-Configure Environment (.env file):Copy .env.example to .env.Generate an application key: php artisan key:generateDatabase Credentials (Railway):Create a MySQL service on Railway.Get the connection URL and fill in DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, and DB_PASSWORD.PayHero Credentials:Fill in PAYHERO_USERNAME, PAYHERO_API_KEY, and PAYHERO_CHANNEL_ID from your PayHero dashboard.AWS S3 Credentials:Fill in AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION, and AWS_BUCKET.Mail Credentials (Mailtrap):Fill in your MAIL_ variables from a Mailtrap Sandbox for development.Run Database Migrations:This will create all the necessary tables in your Railway database.php artisan migrate
-Create Storage Link:This makes your S3-uploaded files accessible.php artisan storage:link
-Compile Frontend Assets:npm run dev
-Running the ApplicationYou need three separate terminal windows for a complete local development experience:Terminal 1 (Web Server):php artisan serve
-Terminal 2 (Queue Worker):This is mandatory for processing payments.php artisan queue:work
-Terminal 3 (Webhook Tunnel):This is mandatory for receiving real-time payment confirmations.ngrok http 8000
-Copy the public HTTPS URL from Ngrok.Paste it into your PayHero dashboard as the Callback URL, followed by /api/webhooks/payhero.🧪 Automated TestingThe project includes a suite of feature tests to ensure core functionality works as expected.Run all tests:php artisan test
-Run a specific test file:php artisan test --filter RegistrationTest
-The test suite is configured to use an in-memory SQLite database, so it won't affect your Railway data.
