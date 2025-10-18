@@ -123,7 +123,7 @@
                     <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 text-center text-gray-500 dark:text-gray-400">
                         No active loan requests available for funding.
                     </div>
-                @endfGorelse
+                @endforelse
 
             </div> {{-- End Grid --}}
         </div>
