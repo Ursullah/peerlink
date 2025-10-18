@@ -16,7 +16,6 @@ class WalletController extends Controller
      */
     public function showDepositForm()
     {
-        // Security check: Admins should not access wallet functions
         if (Auth::user()->role === 'admin') {
             abort(403, 'Admins cannot access wallet features.');
         }
@@ -29,7 +28,6 @@ class WalletController extends Controller
      */
     public function processDeposit(Request $request)
     {
-        // Security check
         if (Auth::user()->role === 'admin') {
             abort(403);
         }
@@ -38,18 +36,22 @@ class WalletController extends Controller
         $user = Auth::user();
         $amountKES = (float) $validated['amount'];
         $phoneNumber = preg_replace('/^0/', '254', $user->phone_number);
+
+        // These values depend on your config/payhero.php and .env file
         $channelId = config('payhero.channel_id');
         $provider = config('payhero.provider', 'm-pesa');
-
         $externalRef = 'DEPOSIT_'.$user->id.'_'.Str::random(8);
 
+        // This is working: It correctly creates the "Pending" transaction.
         $transaction = $user->transactions()->create([
             'type' => 'deposit',
-            'amount' => (int) ($amountKES * 100),
+            'amount' => (int) ($amountKES * 100), // Store in cents
             'status' => 'pending',
             'payhero_transaction_id' => $externalRef,
         ]);
 
+        // The payload for the background job.
+        // The callback_url depends on the APP_URL in your .env file.
         $payload = [
             'amount' => $amountKES,
             'phone_number' => $phoneNumber,
@@ -59,13 +61,14 @@ class WalletController extends Controller
             'external_reference' => $externalRef,
         ];
 
+        // The point of failure is likely inside this Job.
         InitiatePayHeroPayment::dispatch($transaction, $payload);
 
-        // --- SMART REDIRECT ---
-        $successMessage = 'STK Push initiated. Please enter your PIN.';
+        $successMessage = 'STK Push initiated. Please check your phone and enter your PIN.';
 
+        // --- FIXED: Redirect lender to their dashboard for consistency ---
         if ($user->role === 'lender') {
-            return redirect()->route('lender.loans.index')->with('success', $successMessage);
+            return redirect()->route('lender.dashboard')->with('success', $successMessage);
         } else {
             return redirect()->route('dashboard')->with('success', $successMessage);
         }
@@ -76,7 +79,6 @@ class WalletController extends Controller
      */
     public function showWithdrawForm()
     {
-        // Security check
         if (Auth::user()->role === 'admin') {
             abort(403, 'Admins cannot access wallet features.');
         }
@@ -89,7 +91,6 @@ class WalletController extends Controller
      */
     public function processWithdraw(Request $request)
     {
-        // Security check
         if (Auth::user()->role === 'admin') {
             abort(403);
         }
@@ -104,7 +105,6 @@ class WalletController extends Controller
         $amountInKES = (float) $validated['amount'];
         $amountInCents = $amountInKES * 100;
         $externalRef = 'WITHDRAW_'.$user->id.'_'.Str::random(8);
-
         $transaction = null;
 
         DB::transaction(function () use ($user, $wallet, $amountInCents, $externalRef, &$transaction) {
@@ -132,15 +132,12 @@ class WalletController extends Controller
 
         InitiatePayHeroPayout::dispatch($transaction, $payload);
 
-        
         $successMessage = "Your withdrawal of KES {$amountInKES} is being processed.";
 
-    if ($user->role === 'lender') {
-        // Redirect to the correct lender dashboard route
-        return redirect()->route('lender.dashboard')->with('success', $successMessage);
-    } else {
-        return redirect()->route('dashboard')->with('success', $successMessage);
-    }
+        if ($user->role === 'lender') {
+            return redirect()->route('lender.dashboard')->with('success', $successMessage);
+        } else {
+            return redirect()->route('dashboard')->with('success', $successMessage);
+        }
     }
 }
-
