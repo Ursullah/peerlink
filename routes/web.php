@@ -71,6 +71,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/loans/{loanRequest}/approve', [AdminLoanController::class, 'approve'])->name('loans.approve');
     Route::patch('/loans/{loanRequest}/reject', [AdminLoanController::class, 'reject'])->name('loans.reject');
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/revenue', [\App\Http\Controllers\Admin\RevenueController::class, 'index'])->name('revenue.index');
 });
 
 // LENDER ROUTES

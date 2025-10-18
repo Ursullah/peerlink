@@ -2,133 +2,288 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\InitiatePayHeroPayment;
+use App\Models\Loan;
 use App\Models\LoanRequest;
 use App\Models\Transaction;
+use App\Services\PlatformRevenueService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
-class LoanRequestController extends Controller
+class PayHeroWebhookController extends Controller
 {
-    // ... create() and store() methods remain unchanged ...
-    public function create()
+    /**
+     * Handle PayHero webhook for payment confirmations
+     */
+    public function handle(Request $request)
     {
-        return view('loan-requests.create');
-    }
+        Log::info('PayHero webhook received', $request->all());
 
-    public function store(Request $request)
-    {
-        // 1. Validate the form data
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:100', // Minimum KES 100
-            'repayment_period' => 'required|integer|min:7', // Minimum 7 days
-            'reason' => 'required|string|max:1000',
-        ]);
+        $status = $request->input('status');
+        $externalRef = $request->input('external_reference');
+        $transactionId = $request->input('transaction_id');
 
-        $user = Auth::user();
-        $wallet = $user->wallet;
+        if (! $externalRef) {
+            Log::warning('PayHero webhook missing external_reference');
 
-        // 2. Calculate required collateral (e.g., 20% of the loan amount)
-        $amountInCents = $validated['amount'] * 100;
-        $collateralRatio = 0.20; // 20%
-        $requiredCollateral = $amountInCents * $collateralRatio;
-
-        // 3. Check if the user's wallet has enough balance for the collateral
-        if ($wallet->balance < $requiredCollateral) {
-            return back()->withErrors(['amount' => 'Your wallet balance is insufficient to cover the required 20% collateral. Please top up your wallet.'])->withInput();
+            return response()->json(['error' => 'Missing external reference'], 400);
         }
 
-        // 4. Use a database transaction to ensure data integrity
-        DB::transaction(function () use ($user, $wallet, $validated, $amountInCents, $requiredCollateral) {
-            $wallet->balance -= $requiredCollateral;
-            $wallet->save();
-            $systemInterestRate = 12.5;
-            $loanRequest = LoanRequest::create([
-                'user_id' => $user->id,
-                'amount' => $amountInCents,
-                'repayment_period' => $validated['repayment_period'],
-                'interest_rate' => $systemInterestRate,
-                'reason' => $validated['reason'],
-                'collateral_locked' => $requiredCollateral,
-                'status' => 'pending_approval',
-            ]);
-            Transaction::create([
-                'user_id' => $user->id,
-                'transactionable_id' => $loanRequest->id,
-                'transactionable_type' => LoanRequest::class,
-                'type' => 'collateral_lock',
-                'amount' => -$requiredCollateral,
-                'status' => 'successful',
-            ]);
-        });
+        // Find the transaction by external reference
+        $transaction = Transaction::where('payhero_transaction_id', $externalRef)->first();
 
-        return redirect()->route('dashboard')->with('success', 'Your loan request has been submitted successfully and is pending approval!');
+        if (! $transaction) {
+            Log::warning('Transaction not found for external reference: '.$externalRef);
+
+            return response()->json(['error' => 'Transaction not found'], 404);
+        }
+
+        if ($status === 'successful') {
+            $this->processSuccessfulPayment($transaction, $transactionId);
+        } else {
+            $this->processFailedPayment($transaction, $status);
+        }
+
+        return response()->json(['status' => 'processed']);
     }
 
     /**
-     * Process the repayment of a specific loan request, paying back all lenders.
-     * This method now handles both Wallet and STK Push logic.
+     * Handle PayHero webhook for payout confirmations
      */
-    public function repay(LoanRequest $loanRequest)
+    public function handlePayout(Request $request)
     {
-        if ($loanRequest->user_id !== auth()->id() || $loanRequest->status !== 'funded') {
-            abort(403, 'This action is unauthorized or the loan is not ready for repayment.');
+        Log::info('PayHero payout webhook received', $request->all());
+
+        $status = $request->input('status');
+        $externalRef = $request->input('external_reference');
+        $transactionId = $request->input('transaction_id');
+
+        if (! $externalRef) {
+            Log::warning('PayHero payout webhook missing external_reference');
+
+            return response()->json(['error' => 'Missing external reference'], 400);
         }
 
-        $borrower = $loanRequest->borrower;
-        $borrowerWallet = $borrower->wallet;
-        $allLoans = $loanRequest->loans;
-        $totalToRepayAllLenders = $allLoans->sum('total_repayable');
+        // Find the transaction by external reference
+        $transaction = Transaction::where('payhero_transaction_id', $externalRef)->first();
 
-        // --- ATTEMPT WALLET REPAYMENT FIRST ---
-        if ($borrowerWallet->balance >= $totalToRepayAllLenders) {
-            Log::info("Processing instant wallet repayment for LoanRequest #{$loanRequest->id}");
+        if (! $transaction) {
+            Log::warning('Payout transaction not found for external reference: '.$externalRef);
 
-            DB::transaction(function () use ($loanRequest, $totalToRepayAllLenders) {
-                // This is the multi-lender repayment logic we built before
-                $this->executeMultiLenderRepayment($loanRequest, $totalToRepayAllLenders);
+            return response()->json(['error' => 'Transaction not found'], 404);
+        }
+
+        if ($status === 'successful') {
+            $this->processSuccessfulPayout($transaction, $transactionId);
+        } else {
+            $this->processFailedPayout($transaction, $status);
+        }
+
+        return response()->json(['status' => 'processed']);
+    }
+
+    /**
+     * Process successful payment
+     */
+    private function processSuccessfulPayment(Transaction $transaction, string $transactionId)
+    {
+        try {
+            DB::transaction(function () use ($transaction, $transactionId) {
+                $transaction->update([
+                    'status' => 'successful',
+                    'payhero_transaction_id' => $transactionId,
+                ]);
+
+                // Handle different transaction types
+                if ($transaction->type === 'deposit') {
+                    $this->processDepositSuccess($transaction);
+                } elseif ($transaction->type === 'repayment' || $transaction->type === 'stk_repayment') {
+                    $this->processRepaymentSuccess($transaction);
+                } elseif ($transaction->type === 'withdrawal') {
+                    $this->processWithdrawalSuccess($transaction);
+                }
+
+                // Record platform revenue for successful transactions
+                $revenueService = new PlatformRevenueService;
+                $revenueService->recordTransactionFee($transaction);
             });
 
-            return redirect()->route('dashboard')->with('success', 'Loan successfully repaid from your wallet!');
+            Log::info("Successfully processed payment for transaction {$transaction->id}");
+        } catch (\Throwable $e) {
+            Log::error("Failed to process successful payment for transaction {$transaction->id}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
-
-        // --- FALLBACK: INITIATE STK PUSH ---
-        Log::info("Wallet balance insufficient for LoanRequest #{$loanRequest->id}. Initiating STK Push for full amount.");
-        $amountKES = $totalToRepayAllLenders / 100;
-        $phoneNumber = preg_replace('/^0/', '254', $borrower->phone_number);
-        $externalRef = 'REPAY_REQ_'.$loanRequest->id.'_'.Str::random(8);
-
-        // Create a single pending transaction linked to the ENTIRE LoanRequest
-        $transaction = $borrower->transactions()->create([
-            'transactionable_id' => $loanRequest->id,
-            'transactionable_type' => LoanRequest::class,
-            'type' => 'repayment',
-            'amount' => -$totalToRepayAllLenders,
-            'status' => 'pending',
-            'payhero_transaction_id' => $externalRef,
-        ]);
-
-        // Dispatch the job to call PayHero API
-        $payload = [
-            'amount' => $amountKES,
-            'phone_number' => $phoneNumber,
-            'channel_id' => config('payhero.channel_id'),
-            'provider' => config('payhero.provider', 'm-pesa'),
-            'callback_url' => url('/api/webhooks/payhero'), // Your webhook URL
-            'external_reference' => $externalRef,
-        ];
-
-        InitiatePayHeroPayment::dispatch($transaction, $payload);
-
-        return back()->with('success', 'Repayment initiated. Please check your phone and enter your M-Pesa PIN.');
     }
 
     /**
-     * A private helper function containing the core multi-lender repayment logic.
-     * This can now be called from both the wallet repayment and the webhook.
+     * Process failed payment
+     */
+    private function processFailedPayment(Transaction $transaction, string $status)
+    {
+        $transaction->update([
+            'status' => 'failed',
+            'failure_reason' => $status,
+        ]);
+
+        Log::info("Payment failed for transaction {$transaction->id} with status: {$status}");
+    }
+
+    /**
+     * Process successful payout
+     */
+    private function processSuccessfulPayout(Transaction $transaction, string $transactionId)
+    {
+        try {
+            DB::transaction(function () use ($transaction, $transactionId) {
+                $transaction->update([
+                    'status' => 'successful',
+                    'payhero_transaction_id' => $transactionId,
+                ]);
+
+                if ($transaction->type === 'withdrawal') {
+                    $this->processWithdrawalSuccess($transaction);
+                }
+            });
+
+            Log::info("Successfully processed payout for transaction {$transaction->id}");
+        } catch (\Throwable $e) {
+            Log::error("Failed to process successful payout for transaction {$transaction->id}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+    /**
+     * Process failed payout
+     */
+    private function processFailedPayout(Transaction $transaction, string $status)
+    {
+        $transaction->update([
+            'status' => 'failed',
+            'failure_reason' => $status,
+        ]);
+
+        Log::info("Payout failed for transaction {$transaction->id} with status: {$status}");
+    }
+
+    /**
+     * Process successful deposit
+     */
+    private function processDepositSuccess(Transaction $transaction)
+    {
+        $user = $transaction->user;
+        $user->wallet->increment('balance', abs($transaction->amount));
+
+        Log::info("Deposit successful for user {$user->id}, amount: ".abs($transaction->amount));
+    }
+
+    /**
+     * Process successful repayment
+     */
+    private function processRepaymentSuccess(Transaction $transaction)
+    {
+        if ($transaction->transactionable_type === LoanRequest::class) {
+            $this->processLoanRequestRepayment($transaction);
+        } elseif ($transaction->transactionable_type === Loan::class) {
+            $this->processLoanRepayment($transaction);
+        }
+    }
+
+    /**
+     * Process loan request repayment (multi-lender)
+     */
+    private function processLoanRequestRepayment(Transaction $transaction)
+    {
+        $loanRequest = $transaction->transactionable;
+        $borrower = $loanRequest->borrower;
+        $allLoans = $loanRequest->loans;
+        $totalToRepay = abs($transaction->amount);
+
+        // Execute multi-lender repayment logic
+        $this->executeMultiLenderRepayment($loanRequest, $totalToRepay);
+
+        Log::info("Loan request repayment successful for LoanRequest {$loanRequest->id}");
+    }
+
+    /**
+     * Process individual loan repayment
+     */
+    private function processLoanRepayment(Transaction $transaction)
+    {
+        $loan = $transaction->transactionable;
+        $borrower = $loan->borrower;
+        $lender = $loan->lender;
+        $loanRequest = $loan->loanRequest;
+        $amount = abs($transaction->amount);
+
+        try {
+            DB::transaction(function () use ($loan, $borrower, $lender, $loanRequest, $amount) {
+                // Credit lender
+                $lender->wallet->increment('balance', $amount);
+
+                // Update loan
+                $newAmountRepaid = $loan->amount_repaid + $amount;
+                $loan->update([
+                    'amount_repaid' => $newAmountRepaid,
+                    'status' => $newAmountRepaid >= $loan->total_repayable ? 'repaid' : 'active',
+                ]);
+
+                // If fully repaid, release collateral and update loan request
+                if ($newAmountRepaid >= $loan->total_repayable) {
+                    $borrower->wallet->increment('balance', $loanRequest->collateral_locked);
+                    $loanRequest->update(['status' => 'repaid']);
+
+                    // Increase borrower's reputation (capped at 100)
+                    $newReputation = min(100, $borrower->reputation_score + 10);
+                    $borrower->update(['reputation_score' => $newReputation]);
+                } else {
+                    // Partial reputation increase
+                    $repaymentRatio = $amount / $loan->total_repayable;
+                    $reputationIncrease = (int) ($repaymentRatio * 5);
+                    $newReputation = min(100, $borrower->reputation_score + $reputationIncrease);
+                    $borrower->update(['reputation_score' => $newReputation]);
+                }
+
+                // Log lender transaction
+                $lender->transactions()->create([
+                    'type' => 'loan_repayment_credit',
+                    'amount' => $amount,
+                    'status' => 'successful',
+                ]);
+
+                // If fully repaid, log collateral release
+                if ($newAmountRepaid >= $loan->total_repayable) {
+                    $borrower->transactions()->create([
+                        'type' => 'collateral_release',
+                        'amount' => $loanRequest->collateral_locked,
+                        'status' => 'successful',
+                    ]);
+                }
+            });
+
+            Log::info("Loan repayment successful for Loan {$loan->id}");
+        } catch (\Throwable $e) {
+            Log::error("Failed to process loan repayment for Loan {$loan->id}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Process successful withdrawal
+     */
+    private function processWithdrawalSuccess(Transaction $transaction)
+    {
+        // Withdrawal is already processed when initiated
+        // This just confirms the payout was successful
+        Log::info("Withdrawal successful for transaction {$transaction->id}");
+    }
+
+    /**
+     * Execute multi-lender repayment logic
      */
     private function executeMultiLenderRepayment(LoanRequest $loanRequest, int $totalToRepay)
     {
@@ -136,32 +291,44 @@ class LoanRequestController extends Controller
         $borrowerWallet = $borrower->wallet;
         $allLoans = $loanRequest->loans;
 
-        // 1. Debit Borrower's wallet (if it's a wallet payment)
-        // Note: For STK push, this debit is conceptual as the money comes from M-Pesa
-        if ($borrowerWallet->balance >= $totalToRepay) {
-            $borrowerWallet->decrement('balance', $totalToRepay);
-        }
-
-        // 2. Loop through each partial loan and pay back the respective lender
+        // Loop through each partial loan and pay back the respective lender
         foreach ($allLoans as $loan) {
             $lender = $loan->lender;
             $lender->wallet->increment('balance', $loan->total_repayable);
             $loan->update(['status' => 'repaid', 'amount_repaid' => $loan->total_repayable]);
-            Transaction::create(['user_id' => $lender->id, 'type' => 'loan_repayment_credit', 'amount' => $loan->total_repayable, 'status' => 'successful']);
+            Transaction::create([
+                'user_id' => $lender->id,
+                'type' => 'loan_repayment_credit',
+                'amount' => $loan->total_repayable,
+                'status' => 'successful',
+            ]);
         }
 
-        // 3. Update main LoanRequest status
+        // Update main LoanRequest status
         $loanRequest->update(['status' => 'repaid']);
 
-        // 4. Release Borrower's collateral
+        // Release Borrower's collateral
         $borrowerWallet->increment('balance', $loanRequest->collateral_locked);
 
-        // 5. Increase borrower's reputation (capped at 100)
+        // Increase borrower's reputation (capped at 100)
         $newReputation = min(100, $borrower->reputation_score + 10);
         $borrower->update(['reputation_score' => $newReputation]);
 
-        // 6. Log transactions
-        Transaction::create(['user_id' => $borrower->id, 'transactionable_id' => $loanRequest->id, 'transactionable_type' => LoanRequest::class, 'type' => 'repayment', 'amount' => -$totalToRepay, 'status' => 'successful']);
-        Transaction::create(['user_id' => $borrower->id, 'type' => 'collateral_release', 'amount' => $loanRequest->collateral_locked, 'status' => 'successful']);
+        // Log transactions
+        Transaction::create([
+            'user_id' => $borrower->id,
+            'transactionable_id' => $loanRequest->id,
+            'transactionable_type' => LoanRequest::class,
+            'type' => 'repayment',
+            'amount' => -$totalToRepay,
+            'status' => 'successful',
+        ]);
+
+        Transaction::create([
+            'user_id' => $borrower->id,
+            'type' => 'collateral_release',
+            'amount' => $loanRequest->collateral_locked,
+            'status' => 'successful',
+        ]);
     }
 }

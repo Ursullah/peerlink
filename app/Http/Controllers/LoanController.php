@@ -123,7 +123,136 @@ class LoanController extends Controller
 
         // Check if the borrower's wallet has enough funds
         if ($borrowerWallet->balance < $amountInCents) {
-            return back()->with('error', 'Your wallet balance is insufficient for this repayment amount.');
+            // Smart repayment: Use wallet funds + STK push for the difference
+            $walletBalance = $borrowerWallet->balance;
+            $shortfall = $amountInCents - $walletBalance;
+            $shortfallKES = $shortfall / 100;
+
+            // If wallet has some funds, use them and request STK for the rest
+            if ($walletBalance > 0) {
+                try {
+                    DB::transaction(function () use ($loan, $borrower, $borrowerWallet, $amountInCents, $walletBalance) {
+                        $lender = $loan->lender;
+                        $loanRequest = $loan->loanRequest;
+
+                        // Use all available wallet balance
+                        $borrowerWallet->decrement('balance', $walletBalance);
+
+                        // Calculate proportional interest and principal for wallet portion
+                        $totalRepayable = $loan->total_repayable;
+                        $principalAmount = $loan->principal_amount;
+                        $interestAmount = $totalRepayable - $principalAmount;
+
+                        $walletRatio = $walletBalance / $amountInCents;
+                        $walletPrincipalRepaid = $principalAmount * $walletRatio;
+                        $walletInterestRepaid = $interestAmount * $walletRatio;
+
+                        // Update loan with wallet portion
+                        $newAmountRepaid = $loan->amount_repaid + $walletBalance;
+                        $loan->update([
+                            'amount_repaid' => $newAmountRepaid,
+                            'status' => $newAmountRepaid >= $totalRepayable ? 'repaid' : 'active',
+                        ]);
+
+                        // Credit lender with wallet portion
+                        $lender->wallet->increment('balance', $walletBalance);
+
+                        // If fully repaid with wallet, release collateral
+                        if ($newAmountRepaid >= $totalRepayable) {
+                            $borrowerWallet->increment('balance', $loanRequest->collateral_locked);
+                            $loanRequest->update(['status' => 'repaid']);
+
+                            $newReputation = min(100, $borrower->reputation_score + 10);
+                            $borrower->update(['reputation_score' => $newReputation]);
+                        } else {
+                            // Partial reputation increase
+                            $reputationIncrease = (int) (($walletBalance / $totalRepayable) * 5);
+                            $newReputation = min(100, $borrower->reputation_score + $reputationIncrease);
+                            $borrower->update(['reputation_score' => $newReputation]);
+                        }
+
+                        // Log wallet transaction
+                        $borrower->transactions()->create([
+                            'transactionable_id' => $loan->id,
+                            'transactionable_type' => Loan::class,
+                            'type' => 'partial_repayment',
+                            'amount' => -$walletBalance,
+                            'status' => 'successful',
+                        ]);
+
+                        $lender->transactions()->create([
+                            'type' => 'loan_repayment_credit',
+                            'amount' => $walletBalance,
+                            'status' => 'successful',
+                        ]);
+                    });
+
+                    // Now initiate STK push for the shortfall
+                    $phoneNumber = preg_replace('/^0/', '254', $borrower->phone_number);
+                    $channelId = config('payhero.channel_id');
+                    $provider = config('payhero.provider', 'm-pesa');
+                    $externalRef = 'REPAY_'.$loan->id.'_'.Str::random(8);
+
+                    // Create pending transaction for STK portion
+                    $transaction = $borrower->transactions()->create([
+                        'transactionable_id' => $loan->id,
+                        'transactionable_type' => Loan::class,
+                        'type' => 'stk_repayment',
+                        'amount' => -$shortfall,
+                        'status' => 'pending',
+                        'payhero_transaction_id' => $externalRef,
+                    ]);
+
+                    // Dispatch STK push job
+                    $payload = [
+                        'amount' => $shortfallKES,
+                        'phone_number' => $phoneNumber,
+                        'channel_id' => $channelId,
+                        'provider' => $provider,
+                        'callback_url' => url('/api/webhooks/payhero'),
+                        'external_reference' => $externalRef,
+                    ];
+
+                    InitiatePayHeroPayment::dispatch($transaction, $payload);
+
+                    return back()->with('success', 'Insufficient funds! Used KES '.number_format($walletBalance / 100, 2).' from wallet. Please enter your M-Pesa PIN to add KES '.number_format($shortfallKES, 2).' and complete the repayment.');
+
+                } catch (\Throwable $e) {
+                    Log::error("Smart repayment failed for Loan #{$loan->id}", ['error' => $e->getMessage()]);
+
+                    return back()->with('error', 'An error occurred during smart repayment. Please try again.');
+                }
+            } else {
+                // No wallet funds, initiate full STK push
+                $phoneNumber = preg_replace('/^0/', '254', $borrower->phone_number);
+                $channelId = config('payhero.channel_id');
+                $provider = config('payhero.provider', 'm-pesa');
+                $externalRef = 'REPAY_'.$loan->id.'_'.Str::random(8);
+
+                // Create pending transaction
+                $transaction = $borrower->transactions()->create([
+                    'transactionable_id' => $loan->id,
+                    'transactionable_type' => Loan::class,
+                    'type' => 'repayment',
+                    'amount' => -$amountInCents,
+                    'status' => 'pending',
+                    'payhero_transaction_id' => $externalRef,
+                ]);
+
+                // Dispatch STK push job
+                $payload = [
+                    'amount' => $validated['amount'],
+                    'phone_number' => $phoneNumber,
+                    'channel_id' => $channelId,
+                    'provider' => $provider,
+                    'callback_url' => url('/api/webhooks/payhero'),
+                    'external_reference' => $externalRef,
+                ];
+
+                InitiatePayHeroPayment::dispatch($transaction, $payload);
+
+                return back()->with('success', 'Insufficient funds! Please enter your M-Pesa PIN to complete the repayment.');
+            }
         }
 
         try {

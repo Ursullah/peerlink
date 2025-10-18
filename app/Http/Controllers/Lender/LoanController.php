@@ -7,11 +7,11 @@ use App\Models\Loan;
 use App\Models\LoanRequest;
 use App\Models\Transaction;
 use App\Notifications\LoanFundedNotification;
+use App\Services\PlatformRevenueService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class LoanController extends Controller
 {
@@ -39,7 +39,7 @@ class LoanController extends Controller
         // 1. Validate the amount the lender wants to invest
         $validated = $request->validate([
             // Assuming amounts are submitted in KES, not cents
-            'amount' => 'required|numeric|min:1'
+            'amount' => 'required|numeric|min:1',
         ]);
         $fundingAmountInCents = $validated['amount'] * 100;
 
@@ -59,9 +59,10 @@ class LoanController extends Controller
         // 4. Check if the funding amount is valid
         if ($fundingAmountInCents > $remainingNeeded) {
             $maxAmountKES = number_format($remainingNeeded / 100, 2);
+
             return back()->with('error', "Your funding amount exceeds the remaining required amount of KES {$maxAmountKES}.");
         }
-        
+
         // 5. Check if lender has enough funds
         if ($lenderWallet->balance < $fundingAmountInCents) {
             return back()->with('error', 'Your wallet balance is insufficient to fund this amount.');
@@ -91,6 +92,10 @@ class LoanController extends Controller
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
                 'status' => 'active',
             ]);
+
+            // Record platform revenue from interest commission
+            $revenueService = new PlatformRevenueService;
+            $revenueService->recordInterestCommission($loan);
 
             // Log transactions
             Transaction::create(['user_id' => $lender->id, 'type' => 'loan_funding', 'amount' => -$fundingAmountInCents, 'status' => 'successful']);
