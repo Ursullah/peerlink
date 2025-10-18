@@ -102,75 +102,82 @@
                 {{-- Right Column --}}
                 <div class="lg:col-span-2 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
-                        <h3 class="text-lg font-semibold mb-4">My Loan Requests</h3>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-50 dark:bg-gray-700/50">
-                                    <tr>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Amount</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Interest</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Period</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Status</th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    @forelse ($loanRequests as $request)
-                                        <tr class="text-gray-800 dark:text-gray-300">
-                                            <td class="px-6 py-4 whitespace-nowrap">KES
-                                                {{ number_format($request->amount / 100, 2) }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->interest_rate }}%</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->repayment_period }}
-                                                days</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    @if ($request->status == 'pending_approval') bg-yellow-100 text-yellow-800 @endif
-                                                    @if ($request->status == 'active') bg-blue-100 text-blue-800 @endif
-                                                    @if ($request->status == 'funded' || $request->status == 'repaid') bg-green-100 text-green-800 @endif
-                                                    @if ($request->status == 'rejected') bg-red-100 text-red-800 @endif">
-                                                    {{ str_replace('_', ' ', $request->status) }}
-                                                </span>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">My Loan Requests</h3>
+                        </div>
 
-                                                {{-- MODIFIED: Check if status is 'funded' and there are loans to repay --}}
-                                                @if ($request->status == 'funded' && $request->loans->where('status', 'active')->isNotEmpty())
-                                                    {{-- MODIFIED: Form points to the new route --}}
+                        {{-- NEW: Loan Request Cards --}}
+                        <div class="space-y-4">
+                            @forelse ($loanRequests as $request)
+                                @php
+                                    $funded = $request->loans->sum('principal_amount');
+                                    $total = $request->amount;
+                                    $progressPercent = $total > 0 ? ($funded / $total) * 100 : 0;
+                                @endphp
+                                <div class="border rounded-lg p-4 dark:border-gray-700">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="font-semibold text-lg">KES
+                                                {{ number_format($request->amount / 100, 2) }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ $request->interest_rate }}% interest ・
+                                                {{ $request->repayment_period }} days
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                @if ($request->status == 'pending_approval') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 @endif
+                                                @if ($request->status == 'active') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 @endif
+                                                @if ($request->status == 'funded' || $request->status == 'repaid') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 @endif
+                                                @if ($request->status == 'rejected') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 @endif">
+                                                {{ str_replace('_', ' ', $request->status) }}
+                                            </span>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {{ $request->created_at->format('d M, Y') }}</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Progress Bar and Repay Button --}}
+                                    @if ($request->status == 'active' || $request->status == 'funded')
+                                        <div class="mt-4">
+                                            @if ($request->status == 'active')
+                                                <div class="flex justify-between mb-1">
+                                                    <span
+                                                        class="text-sm font-medium text-gray-700 dark:text-gray-300">Funding
+                                                        Progress</span>
+                                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        {{ number_format($progressPercent, 0) }}%
+                                                    </span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-600">
+                                                    <div class="bg-blue-600 h-2.5 rounded-full"
+                                                        style="width: {{ $progressPercent }}%"></div>
+                                                </div>
+                                            @endif
+
+                                            @if ($request->status == 'funded' && $request->loans->where('status', 'active')->isNotEmpty())
+                                                <div class="mt-4 flex justify-end">
                                                     <form method="POST"
-                                                        action="{{ route('loan-requests.repay', $request) }}"
-                                                        class="inline ml-2">
+                                                        action="{{ route('loan-requests.repay', $request) }}">
                                                         @csrf
                                                         <button type="submit"
-                                                            class="px-2 py-0.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition">
-                                                            Repay
+                                                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
+                                                            Repay Loan
                                                         </button>
                                                     </form>
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $request->created_at->format('d M, Y') }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5"
-                                                class="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">
-                                                You have not made any loan requests yet.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+                                    You have not made any loan requests yet.
+                                </div>
+                            @endforelse
                         </div>
+
                     </div>
                 </div>
             </div>
