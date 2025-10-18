@@ -38,7 +38,7 @@
                             {{ __('My Dashboard') }}
                         </x-nav-link>
                         {{-- Update browse link route name --}}
-                        <x-nav-link :href="route('lender.loans.browse')" :active="request()->routeIs('lender.loans.browse')">
+                        <x-nav-link :href="route('lender.loans.index')" :active="request()->routeIs('lender.loans.index')">
                             {{ __('Browse Loans') }}
                         </x-nav-link>
                         <x-nav-link :href="route('lender.loans.investments')" :active="request()->routeIs('lender.loans.investments')">
