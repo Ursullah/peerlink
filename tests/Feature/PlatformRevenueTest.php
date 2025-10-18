@@ -20,18 +20,18 @@ class PlatformRevenueTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->revenueService = new PlatformRevenueService();
+        $this->revenueService = new PlatformRevenueService;
     }
 
-    public function test_ it_records_interest_commission_when_loan_is_created()
+    public function test_it_records_interest_commission_when_loan_is_created()
     {
         $lender = User::factory()->create(['role' => 'lender']);
         $borrower = User::factory()->create(['role' => 'borrower']);
-        
+
         $loanRequest = LoanRequest::factory()->create([
             'user_id' => $borrower->id,
             'amount' => 100000, // KES 1,000
-            'interest_rate' => 12.5
+            'interest_rate' => 12.5,
         ]);
 
         $loan = Loan::factory()->create([
@@ -40,7 +40,7 @@ class PlatformRevenueTest extends TestCase
             'borrower_id' => $borrower->id,
             'principal_amount' => 100000,
             'interest_amount' => 12500, // 12.5% of 100,000
-            'total_repayable' => 112500
+            'total_repayable' => 112500,
         ]);
 
         $this->revenueService->recordInterestCommission($loan);
@@ -50,19 +50,19 @@ class PlatformRevenueTest extends TestCase
             'source_id' => $loan->id,
             'source_type' => Loan::class,
             'amount' => 1875, // 15% of 12,500
-            'percentage' => 15.00
+            'percentage' => 15.00,
         ]);
     }
 
-    public function test_ it_records_transaction_fee_for_deposits()
+    public function test_it_records_transaction_fee_for_deposits()
     {
         $user = User::factory()->create();
-        
+
         $transaction = Transaction::factory()->create([
             'user_id' => $user->id,
             'type' => 'deposit',
             'amount' => 100000, // KES 1,000
-            'status' => 'successful'
+            'status' => 'successful',
         ]);
 
         $this->revenueService->recordTransactionFee($transaction);
@@ -72,20 +72,20 @@ class PlatformRevenueTest extends TestCase
             'source_id' => $transaction->id,
             'source_type' => Transaction::class,
             'amount' => 2050, // 2% of 100,000 + 50 fixed fee
-            'percentage' => 2.00
+            'percentage' => 2.00,
         ]);
     }
 
-    public function test_ it_records_late_fee_for_overdue_loans()
+    public function test_it_records_late_fee_for_overdue_loans()
     {
         $lender = User::factory()->create(['role' => 'lender']);
         $borrower = User::factory()->create(['role' => 'borrower']);
-        
+
         $loan = Loan::factory()->create([
             'lender_id' => $lender->id,
             'borrower_id' => $borrower->id,
             'principal_amount' => 100000, // KES 1,000
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->revenueService->recordLateFee($loan, 5); // 5 days overdue
@@ -95,20 +95,20 @@ class PlatformRevenueTest extends TestCase
             'source_id' => $loan->id,
             'source_type' => Loan::class,
             'amount' => 5000, // 5% of 100,000
-            'percentage' => 5.00
+            'percentage' => 5.00,
         ]);
     }
 
-    public function test_ it_calculates_total_revenue_correctly()
+    public function test_it_calculates_total_revenue_correctly()
     {
         PlatformRevenue::factory()->create([
             'type' => 'interest_commission',
-            'amount' => 100000
+            'amount' => 100000,
         ]);
 
         PlatformRevenue::factory()->create([
             'type' => 'transaction_fee',
-            'amount' => 50000
+            'amount' => 50000,
         ]);
 
         $totalRevenue = $this->revenueService->getTotalRevenue();
@@ -116,21 +116,21 @@ class PlatformRevenueTest extends TestCase
         $this->assertEquals(150000, $totalRevenue);
     }
 
-    public function test_ it_provides_revenue_breakdown_by_type()
+    public function test_it_provides_revenue_breakdown_by_type()
     {
         PlatformRevenue::factory()->create([
             'type' => 'interest_commission',
-            'amount' => 100000
+            'amount' => 100000,
         ]);
 
         PlatformRevenue::factory()->create([
             'type' => 'interest_commission',
-            'amount' => 50000
+            'amount' => 50000,
         ]);
 
         PlatformRevenue::factory()->create([
             'type' => 'transaction_fee',
-            'amount' => 25000
+            'amount' => 25000,
         ]);
 
         $breakdown = $this->revenueService->getRevenueBreakdown();
@@ -139,17 +139,17 @@ class PlatformRevenueTest extends TestCase
         $this->assertEquals(25000, $breakdown['transaction_fee']);
     }
 
-    public function test_ it_calculates_monthly_revenue_trend()
+    public function test_it_calculates_monthly_revenue_trend()
     {
         // Create revenues for different months
         PlatformRevenue::factory()->create([
             'created_at' => now()->subMonths(2),
-            'amount' => 100000
+            'amount' => 100000,
         ]);
 
         PlatformRevenue::factory()->create([
             'created_at' => now()->subMonth(),
-            'amount' => 150000
+            'amount' => 150000,
         ]);
 
         $trend = $this->revenueService->getMonthlyRevenueTrend(12);
@@ -158,16 +158,16 @@ class PlatformRevenueTest extends TestCase
         $this->assertEquals(100000, $trend->first()->total_amount);
     }
 
-    public function test_ it_provides_comprehensive_revenue_stats()
+    public function test_it_provides_comprehensive_revenue_stats()
     {
         PlatformRevenue::factory()->create([
             'type' => 'interest_commission',
-            'amount' => 100000
+            'amount' => 100000,
         ]);
 
         PlatformRevenue::factory()->create([
             'type' => 'transaction_fee',
-            'amount' => 50000
+            'amount' => 50000,
         ]);
 
         $stats = $this->revenueService->getRevenueStats();
