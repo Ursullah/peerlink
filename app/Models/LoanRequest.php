@@ -28,10 +28,12 @@ class LoanRequest extends Model
     }
 
     /**
-     * A LoanRequest has one Loan created from it.
+     * A LoanRequest can be funded by many Loans from different lenders.
+     * We change this from hasOne to hasMany to support partial funding.
      */
-    public function loan()
+    public function loans() // Renamed from loan() to loans()
     {
-        return $this->hasOne(Loan::class);
+        return $this->hasMany(Loan::class);
     }
 }
+

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Loan;
 use App\Models\LoanRequest;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -76,5 +77,62 @@ class LoanRequestController extends Controller
 
         // 5. Redirect to the dashboard with a success message
         return redirect()->route('dashboard')->with('success', 'Your loan request has been submitted successfully and is pending approval!');
+    }
+
+    /**
+     * Process the repayment of a specific loan request, paying back all lenders.
+     */
+    public function repay(LoanRequest $loanRequest)
+    {
+        // Security Check: Ensure the user owns this request and it's ready for repayment
+        if ($loanRequest->user_id !== auth()->id() || $loanRequest->status !== 'funded') {
+            abort(403, 'This action is unauthorized or the loan is not ready for repayment.');
+        }
+
+        $borrower = $loanRequest->borrower;
+        $borrowerWallet = $borrower->wallet;
+        $allLoans = $loanRequest->loans; // Get all partial loans associated with this request
+
+        // Calculate the total sum needed to repay all lenders
+        $totalToRepayAllLenders = $allLoans->sum('total_repayable');
+
+        // Check if the borrower's wallet has enough funds
+        if ($borrowerWallet->balance < $totalToRepayAllLenders) {
+            // Here you could add logic to trigger an STK Push if needed
+            return back()->with('error', 'Your wallet balance is insufficient to repay the loan in full.');
+        }
+
+        // Use a transaction to ensure all operations succeed or none do
+        DB::transaction(function () use ($loanRequest, $borrower, $borrowerWallet, $allLoans, $totalToRepayAllLenders) {
+            // 1. Debit the Borrower's wallet for the full repayment amount
+            $borrowerWallet->decrement('balance', $totalToRepayAllLenders);
+
+            // 2. Loop through each partial loan and pay back the respective lender
+            foreach ($allLoans as $loan) {
+                $lender = $loan->lender;
+                $lender->wallet->increment('balance', $loan->total_repayable);
+
+                // Update the individual loan's status
+                $loan->update(['status' => 'repaid', 'amount_repaid' => $loan->total_repayable]);
+
+                // Log the transaction for the lender
+                Transaction::create(['user_id' => $lender->id, 'type' => 'loan_repayment_credit', 'amount' => $loan->total_repayable, 'status' => 'successful']);
+            }
+
+            // 3. Update the main LoanRequest status to 'repaid'
+            $loanRequest->update(['status' => 'repaid']);
+
+            // 4. Release the Borrower's collateral back to their wallet
+            $borrowerWallet->increment('balance', $loanRequest->collateral_locked);
+
+            // 5. Increase the borrower's reputation score
+            $borrower->increment('reputation_score', 10); // Or your desired value
+
+            // 6. Log the main repayment and collateral release for the borrower
+            Transaction::create(['user_id' => $borrower->id, 'transactionable_id' => $loanRequest->id, 'transactionable_type' => LoanRequest::class, 'type' => 'repayment', 'amount' => -$totalToRepayAllLenders, 'status' => 'successful']);
+            Transaction::create(['user_id' => $borrower->id, 'type' => 'collateral_release', 'amount' => $loanRequest->collateral_locked, 'status' => 'successful']);
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Loan successfully repaid!');
     }
 }
