@@ -8,6 +8,7 @@ use App\Http\Controllers\TransactionController; // Ensure this is imported
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -60,10 +61,10 @@ Route::middleware('auth')->group(function () {
 
 // ADMIN ROUTES
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard'); // Corrected name
-    Route::get('/loans', [App\Http\Controllers\Admin\LoanController::class, 'index'])->name('admin.loans.index'); // Corrected name
-    Route::patch('/loans/{loanRequest}/approve', [App\Http\Controllers\Admin\LoanController::class, 'approve'])->name('admin.loans.approve'); // Corrected name
-    Route::patch('/loans/{loanRequest}/reject', [App\Http\Controllers\Admin\LoanController::class, 'reject'])->name('admin.loans.reject'); // Corrected name
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/loans', [App\Http\Controllers\Admin\LoanController::class, 'index'])->name('loans.index');
+    Route::patch('/loans/{loanRequest}/approve', [App\Http\Controllers\Admin\LoanController::class, 'approve'])->name('loans.approve');
+    Route::patch('/loans/{loanRequest}/reject', [App\Http\Controllers\Admin\LoanController::class, 'reject'])->name('loans.reject');
 });
 
 // LENDER ROUTES
