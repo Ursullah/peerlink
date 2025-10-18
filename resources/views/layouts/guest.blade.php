@@ -64,7 +64,7 @@
         <div class="flex items-center gap-4">
             <a href="{{ url('/') }}" class="flex items-center">
                 <img src="{{ asset('images/peerlink_logo.png') }}" alt="PeerLink Logo"
-                    class="h-28 w-auto sm:h-12 w-auto dark:invert hover:opacity-80 transition-opacity duration-200">
+                    class="h-16 w-auto sm:h-12 w-auto dark:invert hover:opacity-80 transition-opacity duration-200">
             </a>
         </div>
 
