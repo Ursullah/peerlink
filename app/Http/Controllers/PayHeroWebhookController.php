@@ -126,7 +126,13 @@ class PayHeroWebhookController extends Controller
         $borrower->save();
 
         // 5. Log sub-transactions
-        $lender->transactions()->create(['type' => 'deposit', 'amount' => $loan->total_repayable, 'status' => 'successful']);
+        $lender->transactions()->create([
+            'type' => 'repayment_received', // specific type
+            'amount' => $loan->total_repayable,
+            'status' => 'successful',
+            'transactionable_id' => $loan->id, // Link it to the loan
+            'transactionable_type' => Loan::class,
+        ]);
         $borrower->transactions()->create(['type' => 'collateral_release', 'amount' => $loanRequest->collateral_locked, 'status' => 'successful']);
     }
 }

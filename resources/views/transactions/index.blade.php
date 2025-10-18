@@ -56,39 +56,61 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                                             @if ($transaction->status == 'failed' && $transaction->failure_reason)
-                                                {{-- Show failure reason --}}
                                                 <span class="text-red-500">{{ $transaction->failure_reason }}</span>
-                                            @elseif($transaction->transactionable_type === \App\Models\Loan::class)
-                                                {{-- Show related Loan ID --}}
-                                                Loan #{{ $transaction->transactionable_id }}
-                                            @elseif($transaction->transactionable_type === \App\Models\LoanRequest::class)
-                                                {{-- Show related Loan Request ID --}}
-                                                Request #{{ $transaction->transactionable_id }}
-                                            @elseif($transaction->type === 'deposit' || $transaction->type === 'withdrawal')
-                                                {{-- Show PayHero ID for deposits/withdrawals --}}
-                                                {{ $transaction->payhero_transaction_id }}
+                                            @else
+                                                @switch($transaction->type)
+                                                    @case('loan_funding')
+                                                        @if ($transaction->transactionable)
+                                                            To: {{ $transaction->transactionable->borrower->name ?? 'N/A' }}
+                                                            (Loan #{{ $transaction->transactionable_id }})
+                                                        @endif
+                                                    @break
+
+                                                    @case('repayment_received')
+                                                        @if ($transaction->transactionable)
+                                                            From: {{ $transaction->transactionable->borrower->name ?? 'N/A' }}
+                                                            (Loan #{{ $transaction->transactionable_id }})
+                                                        @endif
+                                                    @break
+
+                                                    @case('repayment')
+                                                        @if ($transaction->transactionable)
+                                                            To: {{ $transaction->transactionable->lender->name ?? 'N/A' }}
+                                                            (Loan #{{ $transaction->transactionable_id }})
+                                                        @endif
+                                                    @break
+
+                                                    @case('collateral_lock')
+                                                    @case('collateral_release')
+                                                        Request #{{ $transaction->transactionable_id }}
+                                                    @break
+
+                                                    @default
+                                                        {{-- Fallback for simple deposits/withdrawals --}}
+                                                        {{ $transaction->payhero_transaction_id }}
+                                                @endswitch
                                             @endif
                                         </td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5"
-                                            class="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">
-                                            You have no transactions yet.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5"
+                                                class="px-6 py-4 whitespace-nowrap text-center text-gray-500 dark:text-gray-400">
+                                                You have no transactions yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
 
-                    {{-- Pagination Links --}}
-                    <div>
-                        {{ $transactions->links() }}
-                    </div>
+                        {{-- Pagination Links --}}
+                        <div>
+                            {{ $transactions->links() }}
+                        </div>
 
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</x-app-layout>
+    </x-app-layout>
