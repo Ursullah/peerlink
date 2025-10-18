@@ -65,6 +65,7 @@ class LoanController extends Controller
                 'interest_amount' => $interestAmount,
                 'total_repayable' => $loanAmount + $interestAmount,
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
+                'status' => 'active',
             ]);
             $loan->load('borrower');
             $borrower->notify(new LoanFundedNotification($loan));
