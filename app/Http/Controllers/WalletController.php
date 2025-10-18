@@ -37,21 +37,18 @@ class WalletController extends Controller
         $amountKES = (float) $validated['amount'];
         $phoneNumber = preg_replace('/^0/', '254', $user->phone_number);
 
-        // These values depend on your config/payhero.php and .env file
         $channelId = config('payhero.channel_id');
         $provider = config('payhero.provider', 'm-pesa');
         $externalRef = 'DEPOSIT_'.$user->id.'_'.Str::random(8);
 
-        // This is working: It correctly creates the "Pending" transaction.
+        // **FIX:** Save the unique ID to the 'external_reference' column to match the webhook.
         $transaction = $user->transactions()->create([
             'type' => 'deposit',
             'amount' => (int) ($amountKES * 100), // Store in cents
             'status' => 'pending',
-            'payhero_transaction_id' => $externalRef,
+            'external_reference' => $externalRef,
         ]);
 
-        // The payload for the background job.
-        // The callback_url depends on the APP_URL in your .env file.
         $payload = [
             'amount' => $amountKES,
             'phone_number' => $phoneNumber,
@@ -61,12 +58,10 @@ class WalletController extends Controller
             'external_reference' => $externalRef,
         ];
 
-        // The point of failure is likely inside this Job.
         InitiatePayHeroPayment::dispatch($transaction, $payload);
 
         $successMessage = 'STK Push initiated. Please check your phone and enter your PIN.';
 
-        // --- FIXED: Redirect lender to their dashboard for consistency ---
         if ($user->role === 'lender') {
             return redirect()->route('lender.dashboard')->with('success', $successMessage);
         } else {
@@ -110,11 +105,13 @@ class WalletController extends Controller
         DB::transaction(function () use ($user, $wallet, $amountInCents, $externalRef, &$transaction) {
             $wallet->balance -= $amountInCents;
             $wallet->save();
+
+            // **FIX:** Save the unique ID to the 'external_reference' column.
             $transaction = $user->transactions()->create([
                 'type' => 'withdrawal',
                 'amount' => -$amountInCents,
                 'status' => 'pending',
-                'payhero_transaction_id' => $externalRef,
+                'external_reference' => $externalRef,
             ]);
         });
 

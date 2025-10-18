@@ -17,44 +17,78 @@ class PayHeroWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        // This is the most important line for debugging.
-        Log::info('PayHero STK Push webhook received', $request->all());
+        Log::info('PayHero STK Push webhook received', [
+            'headers' => $request->headers->all(),
+            'body' => $request->all(),
+            'raw_content' => $request->getContent(),
+        ]);
 
-        $stkCallback = $request->input('Body.stkCallback');
+        // Try to get data from request body first
+        $data = $request->all();
 
-        if (! $stkCallback) {
-            Log::warning('PayHero webhook received with invalid format. Missing Body.stkCallback.');
-            return response()->json(['error' => 'Invalid callback format'], 400);
+        // If no data in body, try to decode raw content
+        if (empty($data)) {
+            $content = $request->getContent();
+            $data = json_decode($content, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('PayHero webhook received with invalid JSON format.', ['content' => $content]);
+
+                return response()->json(['error' => 'Invalid JSON format'], 400);
+            }
         }
 
-        $merchantRequestID = $stkCallback['MerchantRequestID'];
-        $resultCode = $stkCallback['ResultCode'];
-        $resultDesc = $stkCallback['ResultDesc'];
+        // Handle different PayHero webhook formats
+        $externalRef = null;
+        $status = null;
+        $transactionId = null;
 
-        // Find the transaction using the MerchantRequestID you saved when you started the transaction.
-        // **IMPORTANT**: Ensure you are saving the MerchantRequestID to this column.
-        $transaction = Transaction::where('merchant_request_id', $merchantRequestID)->first();
+        // Format 1: Direct fields in request
+        if (isset($data['external_reference'])) {
+            $externalRef = $data['external_reference'];
+            $status = $data['status'] ?? $data['Service_status'] ?? null;
+            $transactionId = $data['transaction_id'] ?? $data['Transaction_Reference'] ?? null;
+        }
+        // Format 2: Nested in response field
+        elseif (isset($data['response'])) {
+            $responseData = is_string($data['response']) ? json_decode($data['response'], true) : $data['response'];
+            if ($responseData) {
+                $externalRef = $responseData['User_Reference'] ?? $responseData['external_reference'] ?? null;
+                $status = $responseData['Service_status'] ?? $responseData['status'] ?? null;
+                $transactionId = $responseData['Transaction_Reference'] ?? $responseData['transaction_id'] ?? null;
+            }
+        }
+        // Format 3: Direct transaction data
+        else {
+            $externalRef = $data['User_Reference'] ?? $data['external_reference'] ?? null;
+            $status = $data['Service_status'] ?? $data['status'] ?? null;
+            $transactionId = $data['Transaction_Reference'] ?? $data['transaction_id'] ?? null;
+        }
+
+        if (! $externalRef) {
+            Log::warning('PayHero webhook missing external reference.', ['data' => $data]);
+
+            return response()->json(['error' => 'Missing external reference'], 400);
+        }
+
+        $transaction = Transaction::where('external_reference', $externalRef)->first();
 
         if (! $transaction) {
-            Log::warning('Transaction not found for MerchantRequestID: '.$merchantRequestID);
+            Log::warning('Transaction not found for external reference: '.$externalRef);
+
             return response()->json(['error' => 'Transaction not found'], 404);
         }
 
-        // Check if transaction was successful (ResultCode = 0)
-        if ($resultCode == 0) {
-            // It was successful. Get the M-Pesa receipt number.
-            $callbackMetadata = $stkCallback['CallbackMetadata']['Item'];
-            $mpesaReceiptNumber = '';
-            foreach ($callbackMetadata as $item) {
-                if ($item['Name'] === 'MpesaReceiptNumber') {
-                    $mpesaReceiptNumber = $item['Value'];
-                    break;
-                }
-            }
-            $this->processSuccessfulPayment($transaction, $mpesaReceiptNumber);
+        // Determine if payment was successful
+        $isSuccessful = false;
+        if ($status) {
+            $isSuccessful = in_array(strtolower($status), ['complete', 'successful', 'success', 'completed']);
+        }
+
+        if ($isSuccessful) {
+            $this->processSuccessfulPayment($transaction, $transactionId);
         } else {
-            // The payment failed or was cancelled.
-            $this->processFailedPayment($transaction, $resultDesc);
+            $this->processFailedPayment($transaction, $status ?? 'Unknown failure reason');
         }
 
         return response()->json(['status' => 'processed']);
@@ -62,8 +96,6 @@ class PayHeroWebhookController extends Controller
 
     /**
      * Handle PayHero webhook for payout confirmations
-     * NOTE: This assumes payout webhooks have a different, simpler structure.
-     * If they also use the M-Pesa format, this will need to be adjusted.
      */
     public function handlePayout(Request $request)
     {
@@ -75,13 +107,15 @@ class PayHeroWebhookController extends Controller
 
         if (! $externalRef) {
             Log::warning('PayHero payout webhook missing external_reference');
+
             return response()->json(['error' => 'Missing external reference'], 400);
         }
 
-        $transaction = Transaction::where('payhero_transaction_id', $externalRef)->first();
+        $transaction = Transaction::where('external_reference', $externalRef)->first();
 
         if (! $transaction) {
             Log::warning('Payout transaction not found for external reference: '.$externalRef);
+
             return response()->json(['error' => 'Transaction not found'], 404);
         }
 
@@ -94,15 +128,14 @@ class PayHeroWebhookController extends Controller
         return response()->json(['status' => 'processed']);
     }
 
-
     /**
      * Process successful payment
      */
-    private function processSuccessfulPayment(Transaction $transaction, string $transactionId)
+    private function processSuccessfulPayment(Transaction $transaction, ?string $transactionId)
     {
-        // Prevent processing the same successful transaction twice
         if ($transaction->status === 'successful') {
             Log::warning("Transaction {$transaction->id} already processed as successful.");
+
             return;
         }
 
@@ -110,18 +143,15 @@ class PayHeroWebhookController extends Controller
             DB::transaction(function () use ($transaction, $transactionId) {
                 $transaction->update([
                     'status' => 'successful',
-                    // This now stores the actual M-Pesa Receipt Number
                     'payhero_transaction_id' => $transactionId,
                 ]);
 
-                // Handle different transaction types
                 if ($transaction->type === 'deposit') {
                     $this->processDepositSuccess($transaction);
                 } elseif ($transaction->type === 'repayment' || $transaction->type === 'stk_repayment') {
                     $this->processRepaymentSuccess($transaction);
                 }
 
-                // Record platform revenue for successful transactions
                 $revenueService = new PlatformRevenueService;
                 $revenueService->recordTransactionFee($transaction);
             });
@@ -145,11 +175,8 @@ class PayHeroWebhookController extends Controller
             'failure_reason' => $status,
         ]);
 
-        Log::info("Payment failed for transaction {$transaction->id} with reason: {$status}");
+        Log::info("Payment failed for transaction {$transaction->id} with status: {$status}");
     }
-
-    // --- All your other functions (processSuccessfulPayout, processDepositSuccess, etc.) are perfect and do not need to be changed. ---
-    // --- They are omitted here for brevity but should remain in your file. ---
 
     /**
      * Process successful payout
@@ -162,10 +189,17 @@ class PayHeroWebhookController extends Controller
                     'status' => 'successful',
                     'payhero_transaction_id' => $transactionId,
                 ]);
+
+                if ($transaction->type === 'withdrawal') {
+                    $this->processWithdrawalSuccess($transaction);
+                }
             });
+
             Log::info("Successfully processed payout for transaction {$transaction->id}");
         } catch (\Throwable $e) {
-            Log::error("Failed to process successful payout for transaction {$transaction->id}", ['error' => $e->getMessage()]);
+            Log::error("Failed to process successful payout for transaction {$transaction->id}", [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -178,6 +212,7 @@ class PayHeroWebhookController extends Controller
             'status' => 'failed',
             'failure_reason' => $status,
         ]);
+
         Log::info("Payout failed for transaction {$transaction->id} with status: {$status}");
     }
 
@@ -188,6 +223,7 @@ class PayHeroWebhookController extends Controller
     {
         $user = $transaction->user;
         $user->wallet->increment('balance', abs($transaction->amount));
+
         Log::info("Deposit successful for user {$user->id}, amount: ".abs($transaction->amount));
     }
 
@@ -209,7 +245,8 @@ class PayHeroWebhookController extends Controller
     private function processLoanRequestRepayment(Transaction $transaction)
     {
         $loanRequest = $transaction->transactionable;
-        $this->executeMultiLenderRepayment($loanRequest, abs($transaction->amount));
+        $totalToRepay = abs($transaction->amount);
+        $this->executeMultiLenderRepayment($loanRequest, $totalToRepay);
         Log::info("Loan request repayment successful for LoanRequest {$loanRequest->id}");
     }
 
@@ -220,6 +257,7 @@ class PayHeroWebhookController extends Controller
     {
         $loan = $transaction->transactionable;
         $amount = abs($transaction->amount);
+
         try {
             DB::transaction(function () use ($loan, $amount) {
                 $borrower = $loan->borrower;
@@ -233,16 +271,19 @@ class PayHeroWebhookController extends Controller
                     'status' => $newAmountRepaid >= $loan->total_repayable ? 'repaid' : 'active',
                 ]);
 
-                if ($loan->status === 'repaid') {
+                if ($newAmountRepaid >= $loan->total_repayable) {
                     $borrower->wallet->increment('balance', $loanRequest->collateral_locked);
                     $loanRequest->update(['status' => 'repaid']);
                     $newReputation = min(100, $borrower->reputation_score + 10);
                     $borrower->update(['reputation_score' => $newReputation]);
                 }
             });
+
             Log::info("Loan repayment successful for Loan {$loan->id}");
         } catch (\Throwable $e) {
-            Log::error("Failed to process loan repayment for Loan {$loan->id}", ['error' => $e->getMessage()]);
+            Log::error("Failed to process loan repayment for Loan {$loan->id}", [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -259,6 +300,40 @@ class PayHeroWebhookController extends Controller
      */
     private function executeMultiLenderRepayment(LoanRequest $loanRequest, int $totalToRepay)
     {
-        // ... (your existing logic)
+        $borrower = $loanRequest->borrower;
+        $allLoans = $loanRequest->loans;
+
+        foreach ($allLoans as $loan) {
+            $lender = $loan->lender;
+            $lender->wallet->increment('balance', $loan->total_repayable);
+            $loan->update(['status' => 'repaid', 'amount_repaid' => $loan->total_repayable]);
+            Transaction::create([
+                'user_id' => $lender->id,
+                'type' => 'loan_repayment_credit',
+                'amount' => $loan->total_repayable,
+                'status' => 'successful',
+            ]);
+        }
+
+        $loanRequest->update(['status' => 'repaid']);
+        $borrower->wallet->increment('balance', $loanRequest->collateral_locked);
+        $newReputation = min(100, $borrower->reputation_score + 10);
+        $borrower->update(['reputation_score' => $newReputation]);
+
+        Transaction::create([
+            'user_id' => $borrower->id,
+            'transactionable_id' => $loanRequest->id,
+            'transactionable_type' => LoanRequest::class,
+            'type' => 'repayment',
+            'amount' => -$totalToRepay,
+            'status' => 'successful',
+        ]);
+
+        Transaction::create([
+            'user_id' => $borrower->id,
+            'type' => 'collateral_release',
+            'amount' => $loanRequest->collateral_locked,
+            'status' => 'successful',
+        ]);
     }
 }

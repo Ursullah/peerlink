@@ -16,14 +16,29 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
 */
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// BORROWER-ONLY ROUTES
-Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// BORROWER ROUTES
+Route::middleware(['auth', 'borrower'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
 
@@ -32,7 +47,8 @@ Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
 
         $stats = [
             'active_loan_count' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', 'active')->count(),
-            'total_borrowed' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', '!=', 'defaulted')->sum('principal_amount'),
+            'total_borrowed' => \App\Models\Loan::where('borrower_id', $user->id)->sum('principal_amount'),
+            'total_repaid' => \App\Models\Loan::where('borrower_id', $user->id)->sum('amount_repaid'),
             'reputation_score' => $user->reputation_score,
         ];
         $recentTransactions = $user->transactions()->latest()->take(5)->get();
@@ -46,22 +62,6 @@ Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
     // ---  repay routes  ---
     Route::post('/loan-requests/{loanRequest}/repay', [LoanRequestController::class, 'repay'])->name('loan-requests.repay');
     Route::post('/loans/{loan}/partial-repay', [\App\Http\Controllers\LoanController::class, 'partialRepay'])->name('loans.partial-repay');
-});
-
-// WALLET & TRANSACTION ROUTES (Accessible by all roles)
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
-    Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
-    Route::get('/wallet/withdraw', [WalletController::class, 'showWithdrawForm'])->name('wallet.withdraw.form');
-    Route::post('/wallet/withdraw', [WalletController::class, 'processWithdraw'])->name('wallet.withdraw.process');
-    Route::get('/my-transactions', [TransactionController::class, 'index'])->name('transactions.index');
-});
-
-// PROFILE ROUTES (Accessible by all roles)
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // ADMIN ROUTES
@@ -80,8 +80,17 @@ Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(
 
     // --- UPDATE: Standardized lender loan routes ---
     Route::get('/loans', [LenderLoanController::class, 'index'])->name('loans.index'); // Browse loans
-    Route::post('/loans/{loanRequest}/fund', [LenderLoanController::class, 'fund'])->name('loans.fund');
-    Route::get('/investments', [LenderLoanController::class, 'investments'])->name('loans.investments'); // View my investments
+    Route::post('/loans/{loanRequest}/fund', [LenderLoanController::class, 'fund'])->name('loans.fund'); // Fund a loan
+    Route::get('/loans/investments', [LenderLoanController::class, 'investments'])->name('loans.investments'); // My investments
+});
+
+// WALLET ROUTES (for all authenticated users except admins)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/wallet/deposit', [WalletController::class, 'showDepositForm'])->name('wallet.deposit.form');
+    Route::post('/wallet/deposit', [WalletController::class, 'processDeposit'])->name('wallet.deposit.process');
+    Route::get('/wallet/withdraw', [WalletController::class, 'showWithdrawForm'])->name('wallet.withdraw.form');
+    Route::post('/wallet/withdraw', [WalletController::class, 'processWithdraw'])->name('wallet.withdraw.process');
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
 
 require __DIR__.'/auth.php';
