@@ -12,16 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('loan_requests', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // The borrower
-        $table->bigInteger('amount'); // Requested amount in cents
-        $table->integer('repayment_period'); // In days (e.g., 30, 60)
-        $table->decimal('interest_rate', 5, 2); // e.g., 15.00 for 15%
-        $table->text('reason');
-        $table->bigInteger('collateral_locked'); // Collateral amount in cents
-        $table->enum('status', ['pending_approval', 'active', 'funded', 'rejected'])->default('pending_approval');
-        $table->timestamps();
-    });
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // The borrower
+            $table->bigInteger('amount'); // Requested amount in cents
+            $table->integer('repayment_period'); // In days (e.g., 30, 60)
+            $table->decimal('interest_rate', 5, 2); // e.g., 15.00 for 15%
+            $table->text('reason');
+            $table->bigInteger('collateral_locked'); // Collateral amount in cents
+            $table->enum('status', ['pending_approval', 'active', 'funded', 'rejected'])->default('pending_approval');
+            $table->timestamps();
+        });
     }
 
     /**

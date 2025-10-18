@@ -2,15 +2,25 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PayHeroWebhookController; // Import the controller
 
-Route::get('/user', function (Request $request) {
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+// Public webhook endpoints from PayHero
+Route::post('/webhooks/payhero', [PayHeroWebhookController::class, 'handle'])->name('webhooks.payhero');
+Route::post('/webhooks/payhero-payout', [PayHeroWebhookController::class, 'handlePayout'])->name('webhooks.payhero.payout');
+
+
+// Example authenticated API route (you can remove this if not needed)
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
-
-// Admin: query PayHero for a transaction status (for debugging/reconciliation)
-Route::get('/admin/payhero/transaction/{transactionId}/status', [\App\Http\Controllers\PayHeroAdminController::class, 'status'])->middleware('auth:sanctum');
-
-// Local-only debug route (no auth) for quick polling during development
-if (app()->environment('local')) {
-    Route::get('/debug/payhero/transaction/{transactionId}/status', [\App\Http\Controllers\PayHeroAdminController::class, 'status']);
-}
+});

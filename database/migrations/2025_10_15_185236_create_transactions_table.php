@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained();
-        $table->nullableMorphs('transactionable'); // Links to Loan, LoanRequest, etc.
-        $table->enum('type', ['deposit', 'withdrawal', 'collateral_lock', 'loan_funding', 'repayment', 'collateral_release']);
-        $table->bigInteger('amount'); // In cents. Can be negative for debits.
-        $table->string('payhero_transaction_id')->nullable()->unique(); // From the API
-        $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
-        $table->timestamps();
-    });
+            $table->id();
+            $table->foreignId('user_id')->constrained();
+            $table->nullableMorphs('transactionable'); // Links to Loan, LoanRequest, etc.
+            $table->enum('type', ['deposit', 'withdrawal', 'collateral_lock', 'loan_funding', 'repayment', 'collateral_release']);
+            $table->bigInteger('amount'); // In cents. Can be negative for debits.
+            $table->string('payhero_transaction_id')->nullable()->unique(); // From the API
+            $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
+            $table->timestamps();
+        });
     }
 
     /**

@@ -36,11 +36,12 @@ class CheckPendingTransactions extends Command
 
         // Find transactions that are 'pending' and older than the cutoff time
         $timedOutTransactions = Transaction::where('status', 'pending')
-                                           ->where('created_at', '<', $cutoffTime)
-                                           ->get();
+            ->where('created_at', '<', $cutoffTime)
+            ->get();
 
         if ($timedOutTransactions->isEmpty()) {
             $this->info('No timed-out pending transactions found.');
+
             return 0;
         }
 
@@ -53,6 +54,7 @@ class CheckPendingTransactions extends Command
         }
 
         $this->info('Finished processing timed-out transactions.');
+
         return 0;
     }
 }

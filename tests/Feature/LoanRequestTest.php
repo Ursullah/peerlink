@@ -30,7 +30,7 @@ class LoanRequestTest extends TestCase
 
         // 2. Act: Simulate the logged-in borrower submitting the form
         $response = $this->actingAs($borrower) // Log in as the borrower
-                       ->post(route('loan-requests.store'), $loanData);
+            ->post(route('loan-requests.store'), $loanData);
 
         // 3. Assert: Check the results
         $response->assertRedirect(route('dashboard')); // Check redirect
@@ -62,7 +62,7 @@ class LoanRequestTest extends TestCase
     /** @test */
     public function a_borrower_cannot_create_a_loan_request_without_sufficient_collateral(): void
     {
-         // 1. Arrange: Create a borrower with insufficient funds
+        // 1. Arrange: Create a borrower with insufficient funds
         $borrower = User::factory()->create(['role' => 'borrower']);
         $borrower->wallet()->create(['balance' => 1000]); // Only KES 10 (1000 cents)
 
@@ -75,13 +75,13 @@ class LoanRequestTest extends TestCase
 
         // 2. Act: Simulate submission
         $response = $this->actingAs($borrower)
-                       ->post(route('loan-requests.store'), $loanData);
+            ->post(route('loan-requests.store'), $loanData);
 
         // 3. Assert: Check results
         $response->assertSessionHasErrors('amount'); // Check for validation error on 'amount' field
         $this->assertDatabaseMissing('loan_requests', [ // Ensure NO request was created
             'user_id' => $borrower->id,
         ]);
-         $this->assertEquals(1000, $borrower->wallet->fresh()->balance); // Ensure wallet balance didn't change
+        $this->assertEquals(1000, $borrower->wallet->fresh()->balance); // Ensure wallet balance didn't change
     }
 }

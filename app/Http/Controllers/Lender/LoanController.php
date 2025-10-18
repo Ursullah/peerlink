@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\Lender;
 
-use App\Notifications\LoanFundedNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
 use App\Models\LoanRequest;
 use App\Models\Transaction;
+use App\Notifications\LoanFundedNotification;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-
 
 class LoanController extends Controller
 {
@@ -22,6 +21,7 @@ class LoanController extends Controller
     {
         // Show only loans that are 'active' (approved by admin, ready for funding)
         $loanRequests = LoanRequest::where('status', 'active')->latest()->get();
+
         return view('lender.loans.index', compact('loanRequests'));
     }
 
@@ -65,7 +65,9 @@ class LoanController extends Controller
                 'interest_amount' => $interestAmount,
                 'total_repayable' => $loanAmount + $interestAmount,
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
+                'status' => 'active',
             ]);
+            $loan->load('borrower');
             $borrower->notify(new LoanFundedNotification($loan));
 
             // 7. Log transactions for both parties
@@ -85,9 +87,11 @@ class LoanController extends Controller
 
         return back()->with('success', 'Loan funded successfully! The amount has been transferred to the borrower.');
     }
+
     public function investments()
     {
         $myLoans = Loan::where('lender_id', Auth::id())->with('borrower')->latest()->get();
+
         return view('lender.investments', compact('myLoans'));
     }
 }

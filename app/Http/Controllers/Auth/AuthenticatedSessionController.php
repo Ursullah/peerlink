@@ -19,27 +19,32 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-/**
- * Handle an incoming authentication request.
- */
-public function store(LoginRequest $request): RedirectResponse
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse
 {
     $request->authenticate();
-
     $request->session()->regenerate();
 
-    // Role-based redirect
     $user = $request->user();
-    if ($user && $user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    }
-    if ($user && $user->role === 'lender') {
-        return redirect()->route('lender.loans.index');
+    $role = strtolower($user->role);
+
+    // Force redirect based on role (ignore Laravel's "intended" behavior)
+    if ($role === 'admin') {
+        return redirect()->to('/admin/dashboard');
+    } elseif ($role === 'lender') {
+        return redirect()->route('lender.dashboard');
+    } elseif ($role === 'borrower') {
+        return redirect()->to('/dashboard');
     }
 
-    // Default redirect to borrower dashboard
-    return redirect()->intended(route('dashboard'));
+    Auth::logout();
+    return redirect('/')
+        ->withErrors(['role' => 'Your account role is not recognized.']);
 }
+
+
 
     /**
      * Destroy an authenticated session.

@@ -15,8 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // This is the correct block for middleware configuration
 
         $middleware->appendToGroup('web', [
-        \App\Http\Middleware\PreventBackHistory::class,
-    ]);
+            \App\Http\Middleware\PreventBackHistory::class,
+        ]);
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdminMiddleware::class,
             'lender' => \App\Http\Middleware\IsLenderMiddleware::class,

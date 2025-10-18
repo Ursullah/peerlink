@@ -9,10 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -31,24 +30,14 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-    
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            // Use Rule::unique() for phone_number
-            'phone_number' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('users', 'phone_number')->whereNull('deleted_at'),
-            ],
-            // Use Rule::unique() for email
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->whereNull('deleted_at'),
-            ],
+            'phone_number' => ['required', 'string', 'max:255', Rule::unique('users', 'phone_number')->whereNull('deleted_at')],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->whereNull('deleted_at')],
+            // Validate National ID (uncommented and required)
+            'national_id' => ['required', 'string', 'max:20', Rule::unique('users', 'national_id')->whereNull('deleted_at')],
+            // Validate Role
+            'role' => ['required', Rule::in(['borrower', 'lender'])],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -56,25 +45,29 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'phone_number' => $request->phone_number,
             'email' => $request->email,
+            'national_id' => $request->national_id, // Save National ID
+            'role' => $request->role,             // Save Role
             'password' => Hash::make($request->password),
         ]);
 
         $user->wallet()->create(['balance' => 0]);
-        
-        
 
         event(new Registered($user));
 
         Auth::login($user);
-        
 
-        // Redirect based on role
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
+        // This direct redirect logic is correct
+        $role = strtolower($user->role);
+        if ($role === 'admin') {
+            return redirect()->to('/admin/dashboard');
+        } elseif ($role === 'lender') {
+            return redirect()->to('/lender/loans');
+        } elseif ($role === 'borrower') {
+            return redirect()->to('/dashboard');
         }
-        if ($user->role === 'lender') {
-            return redirect()->route('lender.loans.index');
-        }
-        return redirect(route('dashboard', absolute: false));
+
+        // Fallback in case of an unknown role
+        Auth::logout();
+        return redirect('/')->withErrors(['role' => 'Your account role is not recognized.']);
     }
 }

@@ -2,19 +2,25 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Psr\Log\LoggerInterface;
 
 class PayHeroService
 {
     protected $username;
+
     protected $apiKey;
+
     protected $endpoint;
+
     protected $channelId;
+
     protected $provider;
+
     protected $webhookSecret;
+
     protected $logger;
 
     public function __construct(LoggerInterface $logger)
@@ -34,7 +40,7 @@ class PayHeroService
      */
     public function initiatePayment(array $data)
     {
-        $url = $this->endpoint . '/payments';
+        $url = $this->endpoint.'/payments';
 
         $payload = [
             'amount' => $data['amount'],
@@ -49,8 +55,8 @@ class PayHeroService
 
         try {
             $response = Http::withBasicAuth($this->username, $this->apiKey)
-                        ->acceptJson()
-                        ->post($url, $payload);
+                ->acceptJson()
+                ->post($url, $payload);
 
             $this->logger->info('PayHeroService:initiatePayment - response', ['status' => $response->status(), 'body' => $response->body()]);
 
@@ -66,7 +72,7 @@ class PayHeroService
      */
     public function initiatePayout(array $data)
     {
-        $url = $this->endpoint . '/payouts';
+        $url = $this->endpoint.'/payouts';
 
         $payload = [
             'amount' => $data['amount'],
@@ -78,8 +84,8 @@ class PayHeroService
         $this->logger->info('PayHeroService:initiatePayout - sending payload', ['payload' => $payload]);
 
         $response = Http::withBasicAuth($this->username, $this->apiKey)
-                    ->acceptJson()
-                    ->post($url, $payload);
+            ->acceptJson()
+            ->post($url, $payload);
 
         $this->logger->info('PayHeroService:initiatePayout - response', ['status' => $response->status(), 'body' => $response->body()]);
 
@@ -94,16 +100,16 @@ class PayHeroService
     {
         // PayHero may support GET /payments/{id} or a query endpoint. Try common patterns.
         $candidates = [
-            $this->endpoint . '/payments/' . urlencode($identifier),
-            $this->endpoint . '/payments?external_reference=' . urlencode($identifier),
+            $this->endpoint.'/payments/'.urlencode($identifier),
+            $this->endpoint.'/payments?external_reference='.urlencode($identifier),
         ];
 
         foreach ($candidates as $url) {
             try {
                 $this->logger->info('PayHeroService:fetchPaymentStatus - querying', ['url' => $url]);
                 $response = Http::withBasicAuth($this->username, $this->apiKey)
-                            ->acceptJson()
-                            ->get($url);
+                    ->acceptJson()
+                    ->get($url);
 
                 $this->logger->info('PayHeroService:fetchPaymentStatus - response', ['status' => $response->status(), 'body' => $response->body()]);
 
@@ -130,6 +136,7 @@ class PayHeroService
         // In production it's recommended to set a webhook secret and verify signatures.
         if (! $this->webhookSecret) {
             $this->logger->info('PayHeroService:verifyWebhook - no webhook secret configured; accepting webhook by default');
+
             return true;
         }
 
@@ -141,6 +148,7 @@ class PayHeroService
         $signatureHeader = $request->header($headerName) ?? $request->header('X-Signature');
         if (! $signatureHeader) {
             $this->logger->warning('PayHeroService:verifyWebhook - signature header missing');
+
             return false;
         }
 
@@ -154,12 +162,17 @@ class PayHeroService
             $v1 = null;
             foreach ($parts as $part) {
                 [$k, $v] = explode('=', $part, 2) + [null, null];
-                if ($k === 't') $t = $v;
-                if ($k === 'v1') $v1 = $v;
+                if ($k === 't') {
+                    $t = $v;
+                }
+                if ($k === 'v1') {
+                    $v1 = $v;
+                }
             }
 
             if (! $t || ! $v1) {
                 $this->logger->warning('PayHeroService:verifyWebhook - timestamped signature malformed', ['header' => $signatureHeader]);
+
                 return false;
             }
 
@@ -167,14 +180,16 @@ class PayHeroService
             $ttl = config('payhero.webhook_ttl', 300);
             if (abs(time() - (int) $t) > $ttl) {
                 $this->logger->warning('PayHeroService:verifyWebhook - signature timestamp outside TTL', ['timestamp' => $t, 'ttl' => $ttl]);
+
                 return false;
             }
 
-            $calculated = hash_hmac('sha256', $t . '.' . $body, $this->webhookSecret);
+            $calculated = hash_hmac('sha256', $t.'.'.$body, $this->webhookSecret);
             $valid = hash_equals($calculated, $v1);
             if (! $valid) {
                 $this->logger->warning('PayHeroService:verifyWebhook - signature mismatch (v1)', ['calculated' => $calculated, 'v1' => $v1]);
             }
+
             return $valid;
         }
 

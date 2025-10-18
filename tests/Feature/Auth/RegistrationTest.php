@@ -3,11 +3,13 @@
 use App\Models\User;
 
 test('new users can register', function () {
-    // 1. Arrange: Prepare the data
+    // 1. Arrange: Prepare the complete user data
     $userData = [
         'name' => 'Test User',
-        'phone_number' => '0712345678', // Use a unique phone number
-        'email' => 'test@example.com', // Use a unique email
+        'phone_number' => '0712345678',
+        'email' => 'test@example.com',
+        'national_id' => '12345678', // Add National ID
+        'role' => 'borrower',        // Add Role
         'password' => 'password',
         'password_confirmation' => 'password',
     ];
@@ -16,14 +18,16 @@ test('new users can register', function () {
     $response = $this->post('/register', $userData);
 
     // 3. Assert: Check the results
-    $response->assertRedirect('/dashboard'); // Check if redirected correctly
-    $this->assertAuthenticated(); // Check if the user is logged in
+    $response->assertRedirect('/dashboard');
+    $this->assertAuthenticated();
 
-    // Check if the user was actually created in the database
+    // Check if the user was created in the database
     $this->assertDatabaseHas('users', [
         'name' => 'Test User',
         'phone_number' => '0712345678',
         'email' => 'test@example.com',
+        'national_id' => '12345678',
+        'role' => 'borrower',
     ]);
 
     // Check if the wallet was created

@@ -11,13 +11,13 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    // Use Schema Builder for better compatibility
-    Schema::table('loan_requests', function (Blueprint $table) {
-        // Change the column type to string, which SQLite handles easily
-        $table->string('status')->default('pending_approval')->change(); 
-    });
-}
+    {
+        // Use Schema Builder for better compatibility
+        Schema::table('loan_requests', function (Blueprint $table) {
+            // Change the column type to string, which SQLite handles easily
+            $table->string('status')->default('pending_approval')->change();
+        });
+    }
 
     /**
      * Reverse the migrations.

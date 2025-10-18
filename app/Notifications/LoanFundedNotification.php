@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use App\Models\Loan;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -41,12 +40,12 @@ class LoanFundedNotification extends Notification
         $amount = number_format($this->loan->principal_amount / 100, 2);
 
         return (new MailMessage)
-                    ->subject('Congratulations! Your Loan Has Been Funded')
-                    ->greeting("Hello, {$borrowerName}!")
-                    ->line("We have great news! Your loan request for KES {$amount} has been successfully funded by a lender.")
-                    ->line('The funds are now available in your PeerLink wallet.')
-                    ->action('View My Dashboard', url('/dashboard'))
-                    ->line('Thank you for using PeerLink!');
+            ->subject('Congratulations! Your Loan Has Been Funded')
+            ->greeting("Hello, {$borrowerName}!")
+            ->line("We have great news! Your loan request for KES {$amount} has been successfully funded by a lender.")
+            ->line('The funds are now available in your PeerLink wallet.')
+            ->action('View My Dashboard', url('/dashboard'))
+            ->line('Thank you for using PeerLink!');
     }
 
     /**

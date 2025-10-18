@@ -25,11 +25,7 @@
                             <x-input-error :messages="$errors->get('repayment_period')" class="mt-2" />
                         </div>
 
-                        <div class="mt-4">
-                            <x-input-label for="interest_rate" :value="__('Interest Rate You Offer (%)')" />
-                            <x-text-input id="interest_rate" class="block mt-1 w-full" type="number" step="0.01" name="interest_rate" :value="old('interest_rate')" required />
-                            <x-input-error :messages="$errors->get('interest_rate')" class="mt-2" />
-                        </div>
+                        
 
                         <div class="mt-4">
                             <x-input-label for="reason" :value="__('Reason for Loan')" />

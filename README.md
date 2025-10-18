@@ -1,62 +1,91 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 PeerLink - P2P Micro-Lending Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**PeerLink** is a digital micro-lending platform that connects individuals who need small loans with others willing to lend.  
+It brings **transparency**, **trust**, and **automation** to peer lending by using **PayHero** for instant payments, introducing **digital collateral**, **tracking repayments**, and building a **user reputation system**.
 
-## About Laravel
+This project is built with the **Laravel framework** and demonstrates a complete, end-to-end lending cycle with real-world payment integrations, role-based access, and automated backend processes.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Core Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 👤 Borrower Features
+- Register as a Borrower.
+- Profile Management with avatar uploads to **Amazon S3**.
+- Create Loan Requests with a system-set interest rate.
+- **Wallet Management:** Deposit funds (via real **PayHero STK Push**) and request withdrawals.
+- **Automatic Collateral Locking:** A percentage of the loan amount is locked in the wallet before the request goes live.
+- **Repay Loan:** Repay instantly from wallet balance or via STK Push.
+- **Reputation Score:** Score increases with successful repayments.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 💰 Lender Features
+- Register as a Lender.
+- **Browse Approved Loan Requests:** View a marketplace of active loan requests from borrowers.
+- **Fund Loans:** Instantly transfer funds from your wallet to a borrower to activate a loan.
+- **Track Investments:** Dashboard showing funded loans, their status (active/repaid), and total profit earned.
+- **Wallet Management:** Deposit and withdraw funds.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🛠️ Platform (Admin) Features
+- **Rich Dashboard:** View key stats — total users, total money lent, daily loan charts, user list, and transaction feed.
+- **Loan Approval System:** Approve or reject new loan requests.
+- **Automated Processes:** The system automatically handles overdue loan penalties and transaction timeouts.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🧩 System Architecture & Logic
 
-### Premium Partners
+**PeerLink** is built on a modern, asynchronous architecture for speed and reliability.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Component | Technology |
+|------------|-------------|
+| Frontend | Laravel Blade + Tailwind CSS + Alpine.js |
+| Backend | Laravel 11 (PHP 8.2+) |
+| Database | MySQL (Hosted on Railway.app) |
+| Payments | PayHero Kenya (STK Push & Payouts) |
+| File Storage | Amazon S3 |
+| Queues | Laravel Database Queue Driver |
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 💳 Payment Flow (Asynchronous)
 
-## Code of Conduct
+1. **Initiation:**  
+   A user action (deposit, repay) creates a pending transaction in the database and dispatches a Job (e.g., `InitiatePayHeroPayment`) to the queue.
+2. **Immediate Response:**  
+   The user sees `"Your request is being processed..."`.
+3. **Queue Worker:**  
+   A background `queue:work` process makes the actual API call to **PayHero** via the `PayHeroService`.
+4. **Confirmation:**  
+   PayHero sends a webhook to a public URL (managed via **Ngrok** in development) confirming whether the payment was successful or failed.
+5. **Webhook Handler:**  
+   The `PayHeroWebhookController` receives the notification, verifies it, and updates transaction status, wallet balances, and loan statuses accordingly.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🧰 Local Development Setup
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### ✅ Prerequisites
+- PHP **8.2+**
+- Composer
+- Node.js & npm
+- Railway.app account (for MySQL database)
+- PayHero Kenya merchant account
+- AWS S3 bucket with IAM credentials
+- Ngrok (for local webhook testing)
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# peerlink
+### ⚙️ Installation Steps
+
+```bash
+# Clone the repository
+git clone https://github.com/SingasonSimon/peerlink.git
+cd peerlink
+
+# Install dependencies
+composer install
+npm install

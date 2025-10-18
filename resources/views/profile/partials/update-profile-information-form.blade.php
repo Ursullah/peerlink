@@ -92,6 +92,12 @@
                 </div>
             @endif
         </div>
+        {{-- National ID (Read-only) --}}
+        <div class="mt-4">
+            <x-input-label for="national_id_display" :value="__('National ID Number')" />
+            <x-text-input id="national_id_display" type="text" class="mt-1 block w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed" :value="$user->national_id" disabled readonly />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">National ID cannot be changed after registration.</p>
+        </div>
 
 
         {{-- Save button --}}

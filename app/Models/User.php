@@ -4,9 +4,9 @@ namespace App\Models;
 
 // 1. Import the missing HasFactory trait
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -21,7 +21,8 @@ class User extends Authenticatable
         'name',
         'phone_number',
         'national_id',
-        'email', // This is correct
+        'role',
+        'email',
         'password',
     ];
 
@@ -48,7 +49,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoanRequest::class);
     }
-    
+
     // A User has many Transactions
     public function transactions()
     {
