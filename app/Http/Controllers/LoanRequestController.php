@@ -125,8 +125,9 @@ class LoanRequestController extends Controller
             // 4. Release the Borrower's collateral back to their wallet
             $borrowerWallet->increment('balance', $loanRequest->collateral_locked);
 
-            // 5. Increase the borrower's reputation score
-            $borrower->increment('reputation_score', 10); // Or your desired value
+            // 5. Increase the borrower's reputation score (capped at 100)
+            $newReputation = min(100, $borrower->reputation_score + 10);
+            $borrower->update(['reputation_score' => $newReputation]);
 
             // 6. Log the main repayment and collateral release for the borrower
             Transaction::create(['user_id' => $borrower->id, 'transactionable_id' => $loanRequest->id, 'transactionable_type' => LoanRequest::class, 'type' => 'repayment', 'amount' => -$totalToRepayAllLenders, 'status' => 'successful']);

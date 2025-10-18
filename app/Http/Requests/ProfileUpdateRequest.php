@@ -26,6 +26,7 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'name' => ['string', 'max:255'],
             'email' => ['string', 'email', 'max:255', 'unique:users,email,'.$this->user()->id],
+            'phone_number' => ['string', 'max:255', 'unique:users,phone_number,'.$this->user()->id],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10240'], // 10MB limit
         ];
     }

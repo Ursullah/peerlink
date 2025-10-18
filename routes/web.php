@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\LoanRequestController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LoanController as AdminLoanController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Lender\DashboardController as LenderDashboardController;
 use App\Http\Controllers\Lender\LoanController as LenderLoanController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LoanRequestController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,24 +26,26 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified', 'borrower'])->group(function () {
     Route::get('/dashboard', function () {
         $user = Auth::user();
-        
+
         // --- FIX: Changed with('loan') to with('loans') to match the new relationship ---
         $loanRequests = $user->loanRequests()->with('loans')->latest()->get();
-        
+
         $stats = [
             'active_loan_count' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', 'active')->count(),
             'total_borrowed' => \App\Models\Loan::where('borrower_id', $user->id)->where('status', '!=', 'defaulted')->sum('principal_amount'),
             'reputation_score' => $user->reputation_score,
         ];
         $recentTransactions = $user->transactions()->latest()->take(5)->get();
+
         return view('dashboard', compact('loanRequests', 'stats', 'recentTransactions'));
     })->name('dashboard');
 
     Route::get('/loan-requests/create', [LoanRequestController::class, 'create'])->name('loan-requests.create');
     Route::post('/loan-requests', [LoanRequestController::class, 'store'])->name('loan-requests.store');
-    
-    // ---  repay route  ---
+
+    // ---  repay routes  ---
     Route::post('/loan-requests/{loanRequest}/repay', [LoanRequestController::class, 'repay'])->name('loan-requests.repay');
+    Route::post('/loans/{loan}/partial-repay', [\App\Http\Controllers\LoanController::class, 'partialRepay'])->name('loans.partial-repay');
 });
 
 // WALLET & TRANSACTION ROUTES (Accessible by all roles)
@@ -74,7 +76,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // LENDER ROUTES
 Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(function () {
     Route::get('/dashboard', [LenderDashboardController::class, 'index'])->name('dashboard');
-    
+
     // --- UPDATE: Standardized lender loan routes ---
     Route::get('/loans', [LenderLoanController::class, 'index'])->name('loans.index'); // Browse loans
     Route::post('/loans/{loanRequest}/fund', [LenderLoanController::class, 'fund'])->name('loans.fund');
@@ -82,4 +84,3 @@ Route::middleware(['auth', 'lender'])->prefix('lender')->name('lender.')->group(
 });
 
 require __DIR__.'/auth.php';
-
