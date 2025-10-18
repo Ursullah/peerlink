@@ -27,7 +27,8 @@
         <!-- National ID Input -->
         <div class="mt-4">
             <x-input-label for="national_id" :value="__('National ID Number')" />
-            <x-text-input id="national_id" class="block mt-1 w-full" type="text" name="national_id" :value="old('national_id')" required />
+            <x-text-input id="national_id" class="block mt-1 w-full" type="text" name="national_id"
+                :value="old('national_id')" required />
             <x-input-error :messages="$errors->get('national_id')" class="mt-2" />
         </div>
         {{-- role --}}
@@ -46,12 +47,13 @@
 
         <!-- Password -->
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
-                autocomplete="new-password" />
-
+            <x-password-input name="password" label="Password" :required="true" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        </div>
+
+        <!-- Password Generator -->
+        <div class="mt-4">
+            <x-password-generator target-input-id="password" />
         </div>
 
         <!-- Confirm Password -->
