@@ -7,7 +7,6 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Stat Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</h3>
@@ -32,7 +31,6 @@
                 </div>
             </div>
 
-            <!-- Revenue Overview Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-lg shadow-sm text-white">
                     <div class="flex items-center">
@@ -102,30 +100,30 @@
                 </div>
             </div>
 
-            <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <!-- Revenue Trend Chart -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Monthly Revenue Trend</h3>
-                    <canvas id="revenueChart"></canvas>
+                    <div class="relative h-80">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
                 </div>
 
-                <!-- Revenue Breakdown Pie Chart -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Revenue Breakdown</h3>
-                    <canvas id="revenuePieChart"></canvas>
+                    <div class="relative h-80">
+                        <canvas id="revenuePieChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Loans Chart -->
             <div class="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Loans Funded Per Day</h3>
-                <canvas id="loansChart"></canvas>
+                <div class="relative h-80">
+                    <canvas id="loansChart"></canvas>
+                </div>
             </div>
 
-            <!-- ** THIS GRID CORRECTS THE LAYOUT ** -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Recent Transactions (takes 1/3 width on large screens) -->
                 <div class="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Recent Transactions</h3>
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -164,7 +162,6 @@
                     </ul>
                 </div>
 
-                <!-- User List (takes 2/3 width on large screens) -->
                 <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
                     <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">User List</h3>
                     <div class="overflow-x-auto">
@@ -241,7 +238,7 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false,
+                            maintainAspectRatio: false, // This is correct
                             scales: {
                                 y: {
                                     beginAtZero: true,
@@ -286,7 +283,7 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false,
+                            maintainAspectRatio: false, // This is correct
                             scales: {
                                 y: {
                                     beginAtZero: true,
@@ -339,7 +336,7 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false,
+                            maintainAspectRatio: false, // This is correct
                             plugins: {
                                 legend: {
                                     position: 'bottom',
