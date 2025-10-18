@@ -83,7 +83,7 @@
                 <div class="flex items-center gap-4">
                     <a href="{{ url('/') }}" class="flex items-center">
                         <img src="{{ asset('images/peerlink_logo.png') }}" alt="PeerLink Logo"
-                            class="h-10 w-auto sm:h-12 w-auto dark:invert hover:opacity-80 transition-opacity duration-200">
+                            class="h-16 w-auto sm:h-12 w-auto dark:invert hover:opacity-80 transition-opacity duration-200">
                     </a>
                 </div>
                 {{-- Nav Links & Theme Toggle --}}
@@ -178,6 +178,8 @@
                 </div>
                 <div class="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
                     <dl class="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
+
+                        {{-- 1. Digital Collateral & Requests (NEW ICON) --}}
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div
@@ -185,7 +187,7 @@
                                     <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 6v12m-3-2.818.879.537m0 0 3.992-2.25M6.343 7.343l3.992 2.25m0 0 3.992 2.25M12 6v12m6.343-15.657-3.992 2.25m0 0-3.992 2.25m3.992-2.25 3.992 2.25" />
+                                            d="M21 12a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V5.25a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25V12ZM21 12v-2.25A2.25 2.25 0 0 0 18.75 7.5H5.25A2.25 2.25 0 0 0 3 9.75v2.25Z" />
                                     </svg>
                                 </div>Digital Collateral &amp; Requests
                             </dt>
@@ -193,6 +195,8 @@
                                 wallet to use as digital collateral and create a loan request. This builds immediate
                                 trust.</dd>
                         </div>
+
+                        {{-- 2. Instant Funding (NEW ICON) --}}
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div
@@ -200,7 +204,7 @@
                                     <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.75A.75.75 0 013 4.5h.75m0 0h.75a.75.75 0 010 1.5H3.75m0 0v.75a.75.75 0 01-.75.75h-.75a.75.75 0 01-.75-.75V3.75c0-.414.336-.75.75-.75h2.25c.414 0 .75.336.75.75v.75" />
+                                            d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                                     </svg>
                                 </div>Instant Funding
                             </dt>
@@ -208,6 +212,8 @@
                                 active, approved loan requests. When a loan is funded, the money is instantly
                                 transferred to the borrower's wallet.</dd>
                         </div>
+
+                        {{-- 3. Repay & Build Reputation (NEW ICON) --}}
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div
@@ -215,7 +221,7 @@
                                     <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.985m0 0a8.25 8.25 0 0111.667 0l3.181 3.183m-11.667-3.182a8.25 8.25 0 00-11.667 0L2.985 16.644" />
+                                            d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.31h5.513c.498 0 .698.665.335 1.018l-4.209 3.055a.563.563 0 0 0-.17.618l1.54 5.348a.562.562 0 0 1-.84.62l-4.7-3.426a.563.563 0 0 0-.652 0l-4.7 3.426a.562.562 0 0 1-.84-.62l1.54-5.348a.563.563 0 0 0-.17-.618l-4.209-3.055a.563.563 0 0 1 .335-1.018h5.513a.563.563 0 0 0 .475-.31L11.48 3.5z" />
                                     </svg>
                                 </div>Repay &amp; Build Reputation
                             </dt>
@@ -223,6 +229,8 @@
                                 STK Push. Successful, on-time repayments increase their reputation score, unlocking
                                 better terms in the future.</dd>
                         </div>
+
+                        {{-- 4. Automated & Secure (NEW ICON) --}}
                         <div class="relative pl-16">
                             <dt class="text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <div
@@ -230,7 +238,7 @@
                                     <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.333 9-6.031 9-11.623 0-1.663-.38-3.238-1.05-4.664M12 2.25a11.959 11.959 0 0 0-3.598 3.751" />
                                     </svg>
                                 </div>Automated &amp; Secure
                             </dt>
@@ -282,10 +290,7 @@
                                 class="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900 dark:text-white">
                                 <svg class="h-6 w-6 flex-none text-indigo-600 dark:text-indigo-400" fill="none"
                                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
                                 </svg>
                                 Smarter Credit Scoring
                             </dt>
