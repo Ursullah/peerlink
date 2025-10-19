@@ -10,17 +10,11 @@ use Psr\Log\LoggerInterface;
 class PayHeroService
 {
     protected $username;
-
     protected $apiKey;
-
     protected $endpoint;
-
     protected $channelId;
-
     protected $provider;
-
     protected $webhookSecret;
-
     protected $logger;
 
     public function __construct(LoggerInterface $logger)
@@ -98,7 +92,6 @@ class PayHeroService
      */
     public function fetchPaymentStatus(string $identifier)
     {
-        // PayHero may support GET /payments/{id} or a query endpoint. Try common patterns.
         $candidates = [
             $this->endpoint.'/payments/'.urlencode($identifier),
             $this->endpoint.'/payments?external_reference='.urlencode($identifier),
@@ -118,11 +111,8 @@ class PayHeroService
                 }
             } catch (\Throwable $ex) {
                 $this->logger->warning('PayHeroService:fetchPaymentStatus - attempt failed', ['url' => $url, 'message' => $ex->getMessage()]);
-                // try next candidate
             }
         }
-
-        // If we reach here, return the last response or null
         return null;
     }
 
@@ -132,31 +122,21 @@ class PayHeroService
      */
     public function verifyWebhook(Request $request): bool
     {
-        // If no webhook secret is configured, accept webhooks explicitly.
-        // In production it's recommended to set a webhook secret and verify signatures.
         if (! $this->webhookSecret) {
             $this->logger->info('PayHeroService:verifyWebhook - no webhook secret configured; accepting webhook by default');
-
             return true;
         }
 
-        // PayHero's webhook signature mechanism may vary; this is a placeholder.
-        // Expecting header 'X-Payhero-Signature' with HMAC-SHA256 of the raw body.
         $headerName = config('payhero.signature_header', 'X-Payhero-Signature');
-        $timestampHeader = config('payhero.timestamp_header', 'X-Payhero-Timestamp');
-
         $signatureHeader = $request->header($headerName) ?? $request->header('X-Signature');
         if (! $signatureHeader) {
             $this->logger->warning('PayHeroService:verifyWebhook - signature header missing');
-
             return false;
         }
 
         $body = (string) $request->getContent();
 
-        // Support two formats: raw signature or timestamped signature like "t=...,v1=<sig>"
         if (strpos($signatureHeader, 't=') !== false && strpos($signatureHeader, 'v1=') !== false) {
-            // parse timestamped signature
             $parts = explode(',', $signatureHeader);
             $t = null;
             $v1 = null;
@@ -172,15 +152,12 @@ class PayHeroService
 
             if (! $t || ! $v1) {
                 $this->logger->warning('PayHeroService:verifyWebhook - timestamped signature malformed', ['header' => $signatureHeader]);
-
                 return false;
             }
 
-            // check TTL
             $ttl = config('payhero.webhook_ttl', 300);
             if (abs(time() - (int) $t) > $ttl) {
                 $this->logger->warning('PayHeroService:verifyWebhook - signature timestamp outside TTL', ['timestamp' => $t, 'ttl' => $ttl]);
-
                 return false;
             }
 
@@ -189,17 +166,14 @@ class PayHeroService
             if (! $valid) {
                 $this->logger->warning('PayHeroService:verifyWebhook - signature mismatch (v1)', ['calculated' => $calculated, 'v1' => $v1]);
             }
-
             return $valid;
         }
 
-        // fallback: raw HMAC of body
         $calculated = hash_hmac('sha256', $body, $this->webhookSecret);
         $valid = hash_equals($calculated, $signatureHeader);
         if (! $valid) {
             $this->logger->warning('PayHeroService:verifyWebhook - signature mismatch (raw)', ['calculated' => $calculated, 'header' => $signatureHeader]);
         }
-
         return $valid;
     }
 }

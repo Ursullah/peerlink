@@ -7,6 +7,7 @@ use App\Models\Loan;
 use App\Models\LoanRequest;
 use App\Models\Transaction;
 use App\Notifications\LoanFundedNotification;
+use App\Services\PlatformRevenueService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,78 +20,109 @@ class LoanController extends Controller
      */
     public function index()
     {
-        // Show only loans that are 'active' (approved by admin, ready for funding)
-        $loanRequests = LoanRequest::where('status', 'active')->latest()->get();
+        // MODIFIED: Eager load relationships for efficiency
+        $loanRequests = LoanRequest::with(['loans', 'borrower'])
+            ->where('status', 'active') // Status for 'approved, ready for funding'
+            ->latest()
+            ->get();
 
         return view('lender.loans.index', compact('loanRequests'));
     }
 
     /**
-     * Fund the specified loan request.
+     * Fund the specified loan request (partially or fully).
      */
-    public function fund(LoanRequest $loanRequest)
+    public function fund(Request $request, LoanRequest $loanRequest)
     {
+        // --- NEW PARTIAL FUNDING LOGIC ---
+
+        // 1. Validate the amount the lender wants to invest
+        $validated = $request->validate([
+            // Assuming amounts are submitted in KES, not cents
+            'amount' => 'required|numeric|min:1',
+        ]);
+        $fundingAmountInCents = $validated['amount'] * 100;
+
         $lender = Auth::user();
         $lenderWallet = $lender->wallet;
-        $loanAmount = $loanRequest->amount;
 
-        // 1. Check if lender has enough funds
-        if ($lenderWallet->balance < $loanAmount) {
-            return back()->with('error', 'Your wallet balance is insufficient to fund this loan.');
+        // 2. Check if the loan request is still active
+        if ($loanRequest->status !== 'active') {
+            return back()->with('error', 'This loan request is no longer active for funding.');
         }
 
-        // 2. Use a database transaction for safety
-        DB::transaction(function () use ($loanRequest, $lender, $lenderWallet, $loanAmount) {
+        // 3. Calculate remaining amount needed
+        $totalNeeded = $loanRequest->amount;
+        $currentlyFunded = $loanRequest->loans()->sum('principal_amount');
+        $remainingNeeded = $totalNeeded - $currentlyFunded;
+
+        // 4. Check if the funding amount is valid
+        if ($fundingAmountInCents > $remainingNeeded) {
+            $maxAmountKES = number_format($remainingNeeded / 100, 2);
+
+            return back()->with('error', "Your funding amount exceeds the remaining required amount of KES {$maxAmountKES}.");
+        }
+
+        // 5. Check if lender has enough funds
+        if ($lenderWallet->balance < $fundingAmountInCents) {
+            return back()->with('error', 'Your wallet balance is insufficient to fund this amount.');
+        }
+
+        // 6. Use a database transaction for safety
+        DB::transaction(function () use ($loanRequest, $lender, $lenderWallet, $fundingAmountInCents, $remainingNeeded) {
             $borrower = $loanRequest->borrower;
             $borrowerWallet = $borrower->wallet;
 
-            // 3. Debit the lender's wallet
-            $lenderWallet->balance -= $loanAmount;
-            $lenderWallet->save();
+            // Debit lender, credit borrower
+            $lenderWallet->decrement('balance', $fundingAmountInCents);
+            $borrowerWallet->increment('balance', $fundingAmountInCents);
 
-            // 4. Credit the borrower's wallet
-            $borrowerWallet->balance += $loanAmount;
-            $borrowerWallet->save();
+            // Create the Loan record for this specific contribution
+            $interestRatio = $fundingAmountInCents / $loanRequest->amount;
+            $totalInterestForLoan = $loanRequest->amount * ($loanRequest->interest_rate / 100);
+            $interestForThisLender = $totalInterestForLoan * $interestRatio;
 
-            // 5. Update the loan request status to 'funded'
-            $loanRequest->update(['status' => 'funded']);
-
-            // 6. Create the official Loan record
-            $interestAmount = $loanAmount * ($loanRequest->interest_rate / 100);
             $loan = Loan::create([
                 'loan_request_id' => $loanRequest->id,
                 'borrower_id' => $borrower->id,
                 'lender_id' => $lender->id,
-                'principal_amount' => $loanAmount,
-                'interest_amount' => $interestAmount,
-                'total_repayable' => $loanAmount + $interestAmount,
+                'principal_amount' => $fundingAmountInCents,
+                'interest_amount' => $interestForThisLender,
+                'total_repayable' => $fundingAmountInCents + $interestForThisLender,
                 'due_date' => Carbon::now()->addDays($loanRequest->repayment_period),
                 'status' => 'active',
             ]);
-            $loan->load('borrower');
-            $borrower->notify(new LoanFundedNotification($loan));
 
-            // 7. Log transactions for both parties
-            Transaction::create([
-                'user_id' => $lender->id,
-                'type' => 'loan_funding',
-                'amount' => -$loanAmount,
-                'status' => 'successful',
-            ]);
-            Transaction::create([
-                'user_id' => $borrower->id,
-                'type' => 'deposit',
-                'amount' => $loanAmount,
-                'status' => 'successful',
-            ]);
+            // Record platform revenue from interest commission
+            $revenueService = new PlatformRevenueService;
+            $revenueService->recordInterestCommission($loan);
+
+            // Log transactions
+            Transaction::create(['user_id' => $lender->id, 'type' => 'loan_funding', 'amount' => -$fundingAmountInCents, 'status' => 'successful']);
+            Transaction::create(['user_id' => $borrower->id, 'type' => 'deposit', 'amount' => $fundingAmountInCents, 'status' => 'successful']);
+
+            // Check if the loan is now fully funded
+            if ($fundingAmountInCents >= $remainingNeeded) {
+                $loanRequest->update(['status' => 'funded']);
+                // Notify borrower only when fully funded
+                $loan->load('borrower');
+                $borrower->notify(new LoanFundedNotification($loan));
+            }
         });
 
-        return back()->with('success', 'Loan funded successfully! The amount has been transferred to the borrower.');
+        return redirect()->route('lender.loans.investments')->with('success', 'Loan funded successfully!');
     }
 
+    /**
+     * Display the loans this lender has funded.
+     */
     public function investments()
     {
-        $myLoans = Loan::where('lender_id', Auth::id())->with('borrower')->latest()->get();
+        // CONFIRMED: This query is correct.
+        $myLoans = Loan::where('lender_id', Auth::id())
+            ->with(['borrower', 'loanRequest']) // Added loanRequest for more details
+            ->latest()
+            ->get();
 
         return view('lender.investments', compact('myLoans'));
     }

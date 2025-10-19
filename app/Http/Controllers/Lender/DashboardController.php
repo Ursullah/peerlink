@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Lender;
 
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -24,6 +22,7 @@ class DashboardController extends Controller
             'total_returned' => $myLoans->where('status', 'repaid')->sum('total_repayable'),
             'active_investments' => $myLoans->where('status', 'active')->count(),
             'profit_earned' => $myLoans->where('status', 'repaid')->sum('interest_amount'),
+            'pending_interest' => $myLoans->where('status', 'active')->sum('interest_amount'),
         ];
 
         // Fetch Recent Transactions

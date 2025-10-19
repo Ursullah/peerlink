@@ -22,6 +22,8 @@ class Transaction extends Model
         'amount',
         'status',
         'payhero_transaction_id',
+        'external_reference',
+        'failure_reason',
     ];
 
     /**

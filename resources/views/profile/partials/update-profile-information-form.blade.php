@@ -86,6 +86,16 @@
             @endif
         </div>
 
+        {{-- Phone Number --}}
+        <div class="mt-4">
+            <x-input-label for="phone_number" :value="__('Phone Number')" />
+            <x-text-input id="phone_number" name="phone_number" type="text" class="mt-1 block w-full"
+                :value="old('phone_number', $user->phone_number)" required autocomplete="tel" />
+            <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Your phone number for receiving payments and
+                notifications.</p>
+        </div>
+
         {{-- National ID (Read-only) --}}
         <div class="mt-4">
             <x-input-label for="national_id_display" :value="__('National ID Number')" />
@@ -100,7 +110,7 @@
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
-            
+
         </div>
     </form>
 </section>
